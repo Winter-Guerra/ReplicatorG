@@ -483,6 +483,17 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add16(20); // default to 20 seconds
 		runCommand(pb.getPacket());
 	}
+
+	public void firstCalibration() { //super beta tesing in progress! Please pardon our dust! 
+		//Soon to be first time auto calibration script for the makerbot.
+		if (Base.logger.isLoggable(Level.FINER)) { //log the action
+			Base.logger.log(Level.FINER,"Running first raft calibration script.");
+		}
+		
+		//send the command
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode()); //build packet.
+		runCommand(pb.getPacket()); //send the missle on its merry way towards mars.
+	}
 		
 
 	public void delay(long millis) {

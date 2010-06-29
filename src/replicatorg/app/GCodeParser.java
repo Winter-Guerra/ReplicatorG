@@ -557,6 +557,11 @@ public class GCodeParser {
 				// driver.setRange();
 				break;
 
+			//First time raft calibration. Super Beta testing phase! Please pardon our dust!
+			case 138:
+				driver.firstCalibration();
+				break;
+
 			// initialize to default state.
 			case 200:
 				driver.initialize();

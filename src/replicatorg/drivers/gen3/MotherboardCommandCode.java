@@ -37,7 +37,8 @@ public enum MotherboardCommandCode {
 	CHANGE_TOOL(134),
 	WAIT_FOR_TOOL(135),
 	TOOL_COMMAND(136),
-	ENABLE_AXES(137);
+	ENABLE_AXES(137),
+	FIRST_AUTO_RAFT(138);
 	
 	private int code;
 	private MotherboardCommandCode(int code) {

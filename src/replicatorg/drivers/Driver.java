@@ -173,6 +173,12 @@ public interface Driver {
 	public void homeAxes(EnumSet<Axis> axes, boolean positive);
 
 	/**
+	*First Autoraft script. SUPER BETA TESTING!
+	*/
+	public void firstCalibration();
+	
+
+	/**
 	 * delay / pause function
 	 */
 	public void delay(long millis);
