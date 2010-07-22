@@ -112,6 +112,9 @@ import replicatorg.app.syntax.PdeKeywords;
 import replicatorg.app.syntax.PdeTextAreaDefaults;
 import replicatorg.app.syntax.SyntaxDocument;
 import replicatorg.app.syntax.TextAreaPainter;
+import replicatorg.app.ui.modeling.PreviewPanel;
+import replicatorg.app.util.PythonUtils;
+import replicatorg.app.util.SwingPythonSelector;
 import replicatorg.drivers.EstimationDriver;
 import replicatorg.drivers.OnboardParameters;
 import replicatorg.drivers.SDCardCapture;
@@ -123,6 +126,7 @@ import replicatorg.machine.MachineStateChangeEvent;
 import replicatorg.machine.MachineToolStatusEvent;
 import replicatorg.model.Build;
 import replicatorg.model.BuildCode;
+import replicatorg.model.BuildElement;
 import replicatorg.model.BuildModel;
 import replicatorg.model.JEditTextAreaSource;
 import replicatorg.plugin.toolpath.SkeinforgeGenerator;
@@ -200,7 +204,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	public Build build;
 
 	public JEditTextArea textarea;
-	public STLPreviewPanel stlPanel;
+	public PreviewPanel previewPanel;
 
 	public SimulationThread simulationThread;
 
@@ -236,12 +240,12 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 	public Build getBuild() { return build; }
 	
-	private STLPreviewPanel getStlPanel() {
-		if (stlPanel == null) {
-			stlPanel = new STLPreviewPanel(this);
-			cardPanel.add(stlPanel,MODEL_TAB_KEY);
+	private PreviewPanel getPreviewPanel() {
+		if (previewPanel == null) {
+			previewPanel = new PreviewPanel(this);
+			cardPanel.add(previewPanel,MODEL_TAB_KEY);
 		}
-		return stlPanel;
+		return previewPanel;
 	}
 	
 	private MRUList mruList;
@@ -254,6 +258,8 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		MRJApplicationUtils.registerQuitHandler(this);
 		MRJApplicationUtils.registerOpenDocumentHandler(this);
 
+		PythonUtils.setSelector(new SwingPythonSelector(this));
+		
 		// load up the most recently used files list
 		mruList = MRUList.getMRUList();
 
@@ -311,20 +317,20 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		// splitPane.setContinuousLayout(true);
 		// if window increases in size, give all of increase to
 		// the textarea in the uppper pane
-		splitPane.setResizeWeight(0.8);
+		splitPane.setResizeWeight(0.86);
 
 		// to fix ugliness.. normally macosx java 1.3 puts an
 		// ugly white border around this object, so turn it off.
 		//splitPane.setBorder(null);
 
 		// the default size on windows is too small and kinda ugly
-		int dividerSize = Base.preferences.getInt("editor.divider.size",8);
+		int dividerSize = Base.preferences.getInt("editor.divider.size",5);
 		if (dividerSize < 5) dividerSize = 5;
 		if (dividerSize != 0) {
 			splitPane.setDividerSize(dividerSize);
 		}
 
-		splitPane.setPreferredSize(new Dimension(400,500));
+		splitPane.setPreferredSize(new Dimension(600,600));
 		pane.add(splitPane,"growx,growy,shrinkx,shrinky");
 		pack();
 		
@@ -503,6 +509,19 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	}
 	
 	public void runToolpathGenerator() {
+		// Check for modified STL
+		if (build.getModel().isModified()) {
+			final String message = "<html>You have made changes to this model.  Any unsaved changes will<br>" +
+				"not be reflected in the generated toolpath.<br>" +
+				"Save the model now?</html>";
+			int option = JOptionPane.showConfirmDialog(this, message, "Save model?", 
+					JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+			if (option == JOptionPane.CANCEL_OPTION) { return; }
+			if (option == JOptionPane.YES_OPTION) {
+				// save model
+				handleSave(true);
+			}
+		}
 		ToolpathGenerator generator = new SkeinforgeGenerator();
 		ToolpathGeneratorThread tgt = new ToolpathGeneratorThread(this, generator, build);
 		tgt.addListener(this);
@@ -516,12 +535,18 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	private void reloadSerialMenu() {
 		if (serialMenu == null) return;
 		serialMenu.removeAll();
-		if (machine == null || !(machine.driver instanceof UsesSerial))  {
+		if (machine == null) {
+			JMenuItem item = new JMenuItem("No machine selected.");
+			item.setEnabled(false);
+			serialMenu.add(item);
+			return;
+		} else if (!(machine.driver instanceof UsesSerial))  {
 			JMenuItem item = new JMenuItem("Currently selected machine does not use a serial port.");
 			item.setEnabled(false);
 			serialMenu.add(item);
 			return;
 		}
+		
 		String currentName = null;
 		UsesSerial us = (UsesSerial)machine.driver;
 		if (us.getSerial() != null) {
@@ -541,12 +566,9 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 							try {
 								UsesSerial us = (UsesSerial)machine.driver;
 								if (us != null) synchronized(us) {
-									if (us.getSerial() == null ||
-											us.getSerial().getName() != portName) {
 										us.setSerial(new Serial(portName, us));
 										Base.preferences.put("serial.last_selected", portName);
 										machine.reset();
-									}
 								}
 							} catch (SerialException se) {
 								se.printStackTrace();
@@ -920,7 +942,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textarea.cut();
-				build.setModified(true);
+				build.getCode().setModified(true);
 			}
 		});
 		menu.add(item);
@@ -937,7 +959,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textarea.paste();
-				build.setModified(true);
+				build.getCode().setModified(true);
 			}
 		});
 		menu.add(item);
@@ -1033,7 +1055,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				undoItem.setText(undo.getUndoPresentationName());
 				putValue(Action.NAME, undo.getUndoPresentationName());
 				if (build != null) {
-					build.setModified(true); // 0107
+					build.getCode().setModified(true);
 				}
 			} else {
 				this.setEnabled(false);
@@ -1041,7 +1063,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				undoItem.setText("Undo");
 				putValue(Action.NAME, "Undo");
 				if (build != null) {
-					build.setModified(false); // 0107
+					build.getCode().setModified(false);
 				}
 			}
 		}
@@ -1241,15 +1263,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 		textarea.requestFocus(); // get the caret blinking
 
-		String codeName = code.name;
-		if (codeName == null) {
-			codeName = "Untitled";
-		}
-		// if modified, add the li'l glyph next to the name
-		codeName = codeName + (code.modified ? " \u00A7" : "  ");
-
-		// tabbedPane.setTitleAt(0, codeName); // TODO: fix
-		
 		this.undo = code.undo;
 		undoAction.updateUndoState();
 		redoAction.updateRedoState();
@@ -1257,7 +1270,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 	public void setModel(BuildModel model) {
 		if (model != null) {
-			getStlPanel().setModel(model);
+			getPreviewPanel().setModel(model);
 		}
 	}
 	
@@ -1708,7 +1721,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	 */
 	protected void checkModified(int checkModifiedMode) {
 		this.checkModifiedMode = checkModifiedMode;
-		if (build == null || !build.modified) {
+		if (build == null || !build.hasModifiedElements()) {
 			checkModified2();
 			return;
 		}
@@ -1942,6 +1955,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			setCode(build.getCode());
 			setModel(build.getModel());
 			header.setBuild(build);
+			buttons.updateFromMachine(machine);
 			if (null != path) {
 				handleOpenPath = path;
 				mruList.update(path);
@@ -1995,7 +2009,9 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				Base.logger.info("Saving...");
 				try {
 					if (build.saveAs()) {
+						header.setBuild(build);
 						Base.logger.info("Save operation complete.");
+						mruList.update(build.getMainFilePath());
 						// TODO: Add to MRU?
 					} else {
 						Base.logger.info("Save operation aborted.");
@@ -2197,7 +2213,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			cutItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					textarea.cut();
-					build.setModified(true);
+					build.getCode().setModified(true);
 				}
 			});
 			this.add(cutItem);
@@ -2214,7 +2230,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					textarea.paste();
-					build.setModified(true);
+					build.getCode().setModified(true);
 				}
 			});
 			this.add(item);
@@ -2312,10 +2328,12 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 	public void stateChanged(ChangeEvent e) {
 		// We get a change event when another tab is selected.
-		if (header.getSelectedTab() == EditorHeader.Tab.MODEL) {
-			((CardLayout)cardPanel.getLayout()).show(cardPanel, MODEL_TAB_KEY);
+		CardLayout cl = (CardLayout)cardPanel.getLayout();
+		if (header.getSelectedElement() != null &&
+				header.getSelectedElement().getType() == BuildElement.Type.MODEL ) {
+			cl.show(cardPanel, MODEL_TAB_KEY);
 		} else {
-			((CardLayout)cardPanel.getLayout()).show(cardPanel, GCODE_TAB_KEY);
+			cl.show(cardPanel, GCODE_TAB_KEY);
 		}
 	}
 

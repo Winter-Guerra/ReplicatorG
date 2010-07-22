@@ -52,7 +52,7 @@ public class ToolpathGeneratorThread extends Thread {
 				}
 			});
 			add(doneButton,"tag cancel");
-			this.setModal(true);
+			this.setModal(false);
 		}
 
 		boolean done = false;
@@ -115,8 +115,7 @@ public class ToolpathGeneratorThread extends Thread {
 		try {
 			BuildCode code = generator.generateToolpath();
 			if (code != null) {
-				build.code = code;
-				build.loadCode();
+				build.reloadCode();
 				generator.emitCompletion(GeneratorListener.Completion.SUCCESS, null);
 				Base.logger.info("Toolpath generation complete!");
 			} else {
