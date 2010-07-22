@@ -484,15 +484,32 @@ public class Sanguino3GDriver extends SerialDriver
 		runCommand(pb.getPacket());
 	}
 
-	public void firstCalibration() { //super beta tesing in progress! Please pardon our dust! 
+	public void firstCalibration() { //super beta testing in progress! Please pardon our dust! //M138
 		//Soon to be first time auto calibration script for the makerbot.
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
+
+		//Set the thing to zero?
+		setCurrentPosition(new Point3d()); //Is this right? Yes! (I think)
 		
-		//send the command
-		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode()); //build packet.
-		runCommand(pb.getPacket()); //send the missle on its merry way towards mars.
+		homeAxes(EnumSet.of(Axis.Z),false); //home downwards on the z axis. uses the script above. Works and records the placement! Nice!
+		//So that should have placed us at the lower endstop. A negative position value. We should move up that value. But first we must get it.
+
+		//Get the current negative position And save it permanently.				
+
+		
+		// Why does this code not work? Maybe the endstop trigger stops the build? Should this be scripted in the motherboard instead?
+		Base.logger.info("waiting for is finished");		
+		while (isFinished() == false) {
+		//do nothing!
+		}	
+		Point3d ZStepsToPlatform = new Point3d(); //make point.
+		ZStepsToPlatform = getCurrentPosition(); //get where are we now.
+		ZStepsToPlatform.z = ZStepsToPlatform.z * -1; //make it positive.
+		Base.logger.info("Reached queue");
+		//move up that amount.
+		queuePoint(ZStepsToPlatform);
 	}
 		
 
