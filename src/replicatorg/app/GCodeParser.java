@@ -559,7 +559,7 @@ public class GCodeParser {
 
 			//First time raft calibration. Super Beta testing phase! Please pardon our dust!
 			case 138:
-				driver.firstCalibration(EnumSet.allOf(Axis.class),false,0);
+				driver.firstCalibration(EnumSet.of(Axis.Z),false,0);
 				break;
 
 			// initialize to default state.
