@@ -176,7 +176,7 @@ public interface Driver {
 	/**
 	*First Autoraft script. SUPER BETA TESTING!
 	*/
-	public void firstCalibration();
+	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate);
 	
 
 	/**
