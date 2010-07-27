@@ -331,6 +331,9 @@ public class DriverBaseImplementation implements Driver {
 	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing!
 	}
 
+	public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing!
+	}
+
 	/***************************************************************************
 	 * Machine interface functions
 	 **************************************************************************/

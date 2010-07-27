@@ -372,6 +372,8 @@ public class Sanguino3GDriver extends SerialDriver
 
 			// okay, send it off!
 			queueAbsolutePoint(steps, micros);
+			Base.logger.info(String.valueOf(micros)); //spit out micros
+			
 
 			super.queuePoint(p);
 		}
@@ -559,12 +561,85 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add16(40); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
+	
 		
 		
-		//PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode()); //just send it all to the makerbot and let it sort it out.
-		//runCommand(pb.getPacket());
 	}
 		
+
+public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing in progress! Please pardon our dust! //M138
+
+//The varibles plugged in will be used at some point or another. Just not now.		
+
+//Soon to be first time auto calibration script for the makerbot.
+		if (Base.logger.isLoggable(Level.FINER)) { //log the action
+			Base.logger.log(Level.FINER,"Running first raft calibration script.");
+		}
+
+		//Set the thing to zero?
+		//setCurrentPosition(new Point3d()); //Is this right? Yes! (I think)
+		
+		//homeAxes(EnumSet.of(Axis.Z),false, 0); //home downwards on the z axis. uses the script above. Works and records the placement! Nice!
+		//So that should have placed us at the lower endstop. A negative position value. We should move up that value. But first we must get it.
+		//PS the zero is the feedrate. You can add a custom feedrate or just use the fastest feedrate by inputing zero.
+
+		//Get the current negative position And save it permanently.				
+
+		
+		
+		//Base.logger.info("waiting for is finished"); //remember, the homeaxis command is	
+		//while (isFinished() == false) {
+		//do nothing!
+		//}
+		
+		//Point3d ZStepsToPlatform = new Point3d(); //make point.
+		//ZStepsToPlatform = getCurrentPosition(); //get where are we now.
+		//ZStepsToPlatform.z = ZStepsToPlatform.z * -1; //make it positive.
+
+		byte flags = 0x00;
+
+		invalidatePosition();
+
+		Point3d maxFeedrates = machine.getMaximumFeedrates();
+
+		if (feedrate <= 0) {
+			// figure out our fastest feedrate.
+			feedrate = Math.max(maxFeedrates.x, maxFeedrates.y);
+			feedrate = Math.max(maxFeedrates.z, feedrate);
+		}
+		
+		Point3d target = new Point3d();
+		
+		if (axes.contains(Axis.X)) {
+			flags += 1;
+			feedrate = Math.min(feedrate, maxFeedrates.x);
+			target.x = 1; // just to give us feedrate info.
+		}
+		if (axes.contains(Axis.Y)) {
+			flags += 2;
+			feedrate = Math.min(feedrate, maxFeedrates.y);
+			target.y = 1; // just to give us feedrate info.
+		}
+		if (axes.contains(Axis.Z)) {
+			flags += 4;
+			feedrate = Math.min(feedrate, maxFeedrates.z);
+			target.z = 1; // just to give us feedrate info.
+		}
+		
+		// calculate ticks
+		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
+		// send it!
+		Base.logger.info("Reached queue. Sending command to Makerbot.");
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
+		pb.add8(flags);
+		pb.add32((int) micros);
+		pb.add16(40); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
+		runCommand(pb.getPacket());
+		Base.logger.info("Command sent!");
+		
+		
+	}
+
 
 	public void delay(long millis) {
 		if (Base.logger.isLoggable(Level.FINER)) {
