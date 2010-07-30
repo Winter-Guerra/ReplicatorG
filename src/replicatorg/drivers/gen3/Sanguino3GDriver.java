@@ -558,7 +558,7 @@ public class Sanguino3GDriver extends SerialDriver
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode());
 		pb.add8(flags);
 		pb.add32((int) micros);
-		pb.add16(40); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
+		pb.add16(20); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
 	
@@ -633,7 +633,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
 		pb.add8(flags);
 		pb.add32((int) micros);
-		pb.add16(40); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
+		pb.add16(20); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
 		
