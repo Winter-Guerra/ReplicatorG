@@ -501,25 +501,7 @@ public class Sanguino3GDriver extends SerialDriver
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
 
-		//Set the thing to zero?
-		//setCurrentPosition(new Point3d()); //Is this right? Yes! (I think)
-		
-		//homeAxes(EnumSet.of(Axis.Z),false, 0); //home downwards on the z axis. uses the script above. Works and records the placement! Nice!
-		//So that should have placed us at the lower endstop. A negative position value. We should move up that value. But first we must get it.
 		//PS the zero is the feedrate. You can add a custom feedrate or just use the fastest feedrate by inputing zero.
-
-		//Get the current negative position And save it permanently.				
-
-		
-		
-		//Base.logger.info("waiting for is finished"); //remember, the homeaxis command is	
-		//while (isFinished() == false) {
-		//do nothing!
-		//}
-		
-		//Point3d ZStepsToPlatform = new Point3d(); //make point.
-		//ZStepsToPlatform = getCurrentPosition(); //get where are we now.
-		//ZStepsToPlatform.z = ZStepsToPlatform.z * -1; //make it positive.
 
 		byte flags = 0x00;
 
@@ -558,7 +540,7 @@ public class Sanguino3GDriver extends SerialDriver
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode());
 		pb.add8(flags);
 		pb.add32((int) micros);
-		pb.add16(20); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
+		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
 	
@@ -567,7 +549,7 @@ public class Sanguino3GDriver extends SerialDriver
 	}
 		
 
-public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing in progress! Please pardon our dust! //M138
+public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing in progress! Please pardon our dust! //M139
 
 //The varibles plugged in will be used at some point or another. Just not now.		
 
@@ -582,19 +564,6 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		//homeAxes(EnumSet.of(Axis.Z),false, 0); //home downwards on the z axis. uses the script above. Works and records the placement! Nice!
 		//So that should have placed us at the lower endstop. A negative position value. We should move up that value. But first we must get it.
 		//PS the zero is the feedrate. You can add a custom feedrate or just use the fastest feedrate by inputing zero.
-
-		//Get the current negative position And save it permanently.				
-
-		
-		
-		//Base.logger.info("waiting for is finished"); //remember, the homeaxis command is	
-		//while (isFinished() == false) {
-		//do nothing!
-		//}
-		
-		//Point3d ZStepsToPlatform = new Point3d(); //make point.
-		//ZStepsToPlatform = getCurrentPosition(); //get where are we now.
-		//ZStepsToPlatform.z = ZStepsToPlatform.z * -1; //make it positive.
 
 		byte flags = 0x00;
 
@@ -633,7 +602,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
 		pb.add8(flags);
 		pb.add32((int) micros);
-		pb.add16(20); // default is 20 seconds. I made it 40 because I wanted to make sure that it would reach the bottom.
+		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
 		

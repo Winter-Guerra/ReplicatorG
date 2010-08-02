@@ -559,12 +559,12 @@ public class GCodeParser {
 
 			//First time raft calibration. Super Beta testing phase! Please pardon our dust! M138
 			case 138:
-				driver.firstCalibration(EnumSet.of(Axis.Z),false,0); //Axis, direction, feedrate (Zero means default fastest)
+				driver.firstCalibration(EnumSet.allOf(Axis.class),false,0); //Axis, direction, feedrate (Zero means default fastest)
 				break;
 				
 				//Auto raft calibration. Super Beta testing phase! Please pardon our dust! M139
 			case 139:
-				driver.autoCalibration(EnumSet.of(Axis.Z),false,0); //Axis, direction, feedrate (Zero means default fastest)
+				driver.autoCalibration(EnumSet.allOf(Axis.class),false,0); //Axis, direction, feedrate (Zero means default fastest)
 				break;
 
 			// initialize to default state.
