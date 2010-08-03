@@ -548,6 +548,8 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
+		//while (isFinished() != true) { //just wait!
+		//}
 	
 		
 		
@@ -611,6 +613,8 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		Base.logger.info("Command sent!");
+		//while (isFinished() != true) { //wait till isfinished homing
+		//}
 		
 		
 	}
