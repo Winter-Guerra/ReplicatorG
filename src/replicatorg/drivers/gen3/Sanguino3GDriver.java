@@ -372,7 +372,6 @@ public class Sanguino3GDriver extends SerialDriver
 
 			// okay, send it off!
 			queueAbsolutePoint(steps, micros);
-			Base.logger.info(String.valueOf(micros)); //spit out micros
 			
 
 			super.queuePoint(p);
@@ -450,8 +449,6 @@ public class Sanguino3GDriver extends SerialDriver
 		Base.logger.log(Level.FINE,"Homing axes "+axes.toString());
 		byte flags = 0x00;
 
-		invalidatePosition();
-
 		Point3d maxFeedrates = machine.getMaximumFeedrates();
 
 		if (feedrate <= 0) {
@@ -489,7 +486,7 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add32((int) micros);
 		pb.add16(20); // default to 20 seconds
 		runCommand(pb.getPacket());
-		Base.logger.info(String.valueOf(micros)); //spit out micros
+		//Base.logger.info(String.valueOf(micros)); //spit out micros (For debugging purposes.)
 }
 
 	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing in progress! Please pardon our dust! //M138
@@ -505,7 +502,15 @@ public class Sanguino3GDriver extends SerialDriver
 
 		byte flags = 0x00;
 
-		invalidatePosition();
+		//we already know where we should be at the end of this. 0,0,0!
+		
+		Point3d p = new Point3d(); //0,0,0
+		
+		System.err.println("   SCP: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
+		if (super.getCurrentPosition().equals(p)) {}
+		else {super.setCurrentPosition(p); }
+
+		super.setCurrentPosition(p);
 
 		Point3d maxFeedrates = machine.getMaximumFeedrates();
 
@@ -558,16 +563,17 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
 
-		//Set the thing to zero?
-		//setCurrentPosition(new Point3d()); //Is this right? Yes! (I think)
 		
-		//homeAxes(EnumSet.of(Axis.Z),false, 0); //home downwards on the z axis. uses the script above. Works and records the placement! Nice!
-		//So that should have placed us at the lower endstop. A negative position value. We should move up that value. But first we must get it.
-		//PS the zero is the feedrate. You can add a custom feedrate or just use the fastest feedrate by inputing zero.
-
 		byte flags = 0x00;
 
-		invalidatePosition();
+		//We know where we should be. 0,0,0! (We only have to tell ourselves that we will be at 000. The machine will automatically know.)
+		Point3d p = new Point3d(); //0,0,0
+		
+		System.err.println("   SCP: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
+		if (super.getCurrentPosition().equals(p)) {}
+		else {super.setCurrentPosition(p); }
+
+		super.setCurrentPosition(p);
 
 		Point3d maxFeedrates = machine.getMaximumFeedrates();
 
