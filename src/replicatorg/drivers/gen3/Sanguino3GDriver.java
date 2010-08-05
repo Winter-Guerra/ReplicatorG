@@ -1247,6 +1247,18 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		PacketResponse pr = runCommand(pb.getPacket());
 		assert pr.get8() == data.length; 
 	}
+	
+	private void writeToEEPROM32(int offset, long data) {
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WRITE_EEPROM32.getCode());
+		pb.add16(offset);
+		//pb.add8(data.length);
+		//for (int32_t b : data) {
+		//	pb.add32(b);
+		//}
+		pb.add32(data);
+		//PacketResponse pr = runCommand(pb.getPacket());
+		//assert pr.get32() == data.length; 
+	}
 
 	private byte[] readFromToolEEPROM(int offset, int len) {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
@@ -1307,8 +1319,11 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 	/// 00-01 - EEPROM data version
 	/// 02    - Axis inversion byte
 	/// 32-47 - Machine name (max. 16 chars)
+	/// 256-274 Autohome axis varibles
+	/// 275-278 Amount to move Zstage up during a home or safemove.
 	final private static int EEPROM_CHECK_OFFSET = 0;
 	final private static int EEPROM_MACHINE_NAME_OFFSET = 32;
+	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 275;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
 	final static class ECThermistorOffsets {
@@ -1373,6 +1388,28 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		}
 		if (idx < 16) b[idx] = 0;
 		writeToEEPROM(EEPROM_MACHINE_NAME_OFFSET,b);
+	}
+	
+	public void setZstageMMtoLift(String MMtoLift) {
+		//machineName = new String(machineName);
+		//if (machineName.length() > 16) { 
+		//	machineName = machineName.substring(0,16);
+		//}
+		//byte b[] = new byte[16];
+		//int idx = 0;
+		//for (byte sb : machineName.getBytes()) {
+		//	b[idx++] = sb;
+		//	if (idx == 16) break;
+		//}
+		//if (idx < 16) b[idx] = 0;
+		int aInt = Integer.parseInt(MMtoLift);
+		Point3d mmtolift = new Point3d();
+		mmtolift.z = aInt;
+		Point3d steps = machine.mmToSteps(mmtolift);
+		//pb.add32((long) steps.x);
+		//pb.add32((long) steps.y);
+		//pb.add32((long) steps.z);
+		writeToEEPROM32(EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET,(long) steps.z);
 	}
 	
 	public boolean hasFeatureOnboardParameters() {

@@ -28,6 +28,8 @@ public enum MotherboardCommandCode {
 
 	NEXT_FILENAME(18),
 	
+	WRITE_EEPROM32(20),
+	
 	// QUEUE_POINT_INC(128) obsolete
 	QUEUE_POINT_ABS(129),
 	SET_POSITION(130),

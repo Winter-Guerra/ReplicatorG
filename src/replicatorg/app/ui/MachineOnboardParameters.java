@@ -36,6 +36,7 @@ public class MachineOnboardParameters extends JFrame {
 	private JCheckBox xAxisInvertBox = new JCheckBox();
 	private JCheckBox yAxisInvertBox = new JCheckBox();
 	private JCheckBox zAxisInvertBox = new JCheckBox();
+	private JTextField zAxisMMToLift = new JTextField();
 	private JButton extruderButton = new JButton("Edit extruder parameters");
 	private JButton resetToFactoryButton = new JButton("Reset motherboard to factory settings");
 	private static final String[]  endstopInversionChoices = {
@@ -62,6 +63,7 @@ public class MachineOnboardParameters extends JFrame {
 	
 	private void commit() {
 		target.setMachineName(machineNameField.getText());
+		target.setZstageMMtoLift(zAxisMMToLift.getText());
 		EnumSet<Axis> axesInverted = EnumSet.noneOf(Axis.class);
 		if (xAxisInvertBox.isSelected()) axesInverted.add(Axis.X);
 		if (yAxisInvertBox.isSelected()) axesInverted.add(Axis.Y);
@@ -117,6 +119,7 @@ public class MachineOnboardParameters extends JFrame {
 		this.driver = driver;
 		JPanel panel = new JPanel(new MigLayout());
 		machineNameField.setColumns(MAX_NAME_LENGTH);
+		zAxisMMToLift.setColumns(16);
 		panel.add(new JLabel("Machine Name (max. "+Integer.toString(MAX_NAME_LENGTH)+" chars)"));
 		panel.add(machineNameField,"wrap");
 		panel.add(new JLabel("Invert X axis"));
@@ -127,6 +130,8 @@ public class MachineOnboardParameters extends JFrame {
 		panel.add(zAxisInvertBox,"wrap");
 		panel.add(new JLabel("Invert endstops"));
 		panel.add(endstopInversionSelection,"wrap");
+		panel.add(new JLabel("MM to lift Zstage on Homing."));
+		panel.add(zAxisMMToLift,"wrap");
 		extruderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				ExtruderOnboardParameters eop = new ExtruderOnboardParameters(MachineOnboardParameters.this.target);
