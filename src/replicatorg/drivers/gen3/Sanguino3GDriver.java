@@ -1256,7 +1256,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		//	pb.add32(b);
 		//}
 		pb.add32(data);
-		//PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runCommand(pb.getPacket());
 		//assert pr.get32() == data.length; 
 	}
 
@@ -1391,7 +1391,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 	}
 	
 	public void setZstageMMtoLift(String MMtoLift) {
-		//machineName = new String(machineName);
+		MMtoLift = new String(MMtoLift);
 		//if (machineName.length() > 16) { 
 		//	machineName = machineName.substring(0,16);
 		//}
@@ -1402,7 +1402,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		//	if (idx == 16) break;
 		//}
 		//if (idx < 16) b[idx] = 0;
-		int aInt = Integer.parseInt(MMtoLift);
+		int aInt = Integer.valueOf(MMtoLift);
 		Point3d mmtolift = new Point3d();
 		mmtolift.z = aInt;
 		Point3d steps = machine.mmToSteps(mmtolift);
