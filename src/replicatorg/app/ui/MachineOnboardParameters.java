@@ -130,7 +130,7 @@ public class MachineOnboardParameters extends JFrame {
 		panel.add(zAxisInvertBox,"wrap");
 		panel.add(new JLabel("Invert endstops"));
 		panel.add(endstopInversionSelection,"wrap");
-		panel.add(new JLabel("MM to lift Zstage above build platform when homing (to avoid accidentaly hitting it)."));
+		panel.add(new JLabel("MM to lift Zstage above build platform when homing. (To avoid crashes)"));
 		panel.add(zAxisMMToLift,"wrap");
 		extruderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {

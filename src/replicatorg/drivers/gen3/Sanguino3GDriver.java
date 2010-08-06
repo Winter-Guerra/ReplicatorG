@@ -673,7 +673,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WAIT_FOR_TOOL.getCode());
 		pb.add8((byte) toolIndex);
 		pb.add16(100); // delay between master -> slave pings (millis)
-		pb.add16(120); // timeout before continuing (seconds)
+		pb.add16(360); // timeout before continuing (seconds) (Six minutes should be enough to heat up!)
 		runCommand(pb.getPacket());
 	}
 
