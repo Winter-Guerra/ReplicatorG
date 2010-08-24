@@ -498,13 +498,9 @@ public class Sanguino3GDriver extends SerialDriver
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
 
-		//PS the zero is the feedrate. You can add a custom feedrate or just use the fastest feedrate by inputing zero.
-
 		byte flags = 0x00;
-
-		//we already know where we should be at the end of this. 0,0,0!
 		
-		Point3d p = new Point3d(); //0,0,0
+		Point3d p = new Point3d(); //0,0,0. We already know that we should be here at the end of this.
 		
 		System.err.println("   SCP: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
 		if (super.getCurrentPosition().equals(p)) {}
@@ -543,15 +539,12 @@ public class Sanguino3GDriver extends SerialDriver
 		// send it!
 		Base.logger.info("Reached queue. Sending command to Makerbot.");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode());
-		pb.add8(flags);
-		pb.add32((int) micros);
-		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
-		runCommand(pb.getPacket());
-		Base.logger.info("Command sent!");
-		//while (isFinished() != true) { //just wait!
-		//}
-	
-		
+		pb.add8(flags); //axis to home.
+		pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active)
+		pb.add32((int) micros); //feedrate
+		pb.add16(60); // default homing timeout is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
+		runCommand(pb.getPacket()); //send the command.
+		Base.logger.info("Command sent!");		
 		
 	}
 		
@@ -609,6 +602,7 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		Base.logger.info("Reached queue. Sending command to Makerbot.");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
 		pb.add8(flags);
+		pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active)
 		pb.add32((int) micros);
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
@@ -1251,10 +1245,6 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 	private void writeToEEPROM32(int offset, long data) {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WRITE_EEPROM32.getCode());
 		pb.add16(offset);
-		//pb.add8(data.length);
-		//for (int32_t b : data) {
-		//	pb.add32(b);
-		//}
 		pb.add32(data);
 		PacketResponse pr = runCommand(pb.getPacket());
 		//assert pr.get32() == data.length; 
@@ -1319,11 +1309,11 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 	/// 00-01 - EEPROM data version
 	/// 02    - Axis inversion byte
 	/// 32-47 - Machine name (max. 16 chars)
-	/// 256-274 Autohome axis varibles
-	/// 275-278 Amount to move Zstage up during a home or safemove.
+	/// 256-267 Autohome axis varibles
+	/// 268-271 Amount to move Zstage up during a home or safemove.
 	final private static int EEPROM_CHECK_OFFSET = 0;
 	final private static int EEPROM_MACHINE_NAME_OFFSET = 32;
-	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 275;
+	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 268;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
 	final static class ECThermistorOffsets {
@@ -1392,17 +1382,10 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 	
 	public void setZstageMMtoLift(String MMtoLift) {
 		MMtoLift = new String(MMtoLift);
-		//if (machineName.length() > 16) { 
-		//	machineName = machineName.substring(0,16);
-		//}
-		//byte b[] = new byte[16];
-		//int idx = 0;
-		//for (byte sb : machineName.getBytes()) {
-		//	b[idx++] = sb;
-		//	if (idx == 16) break;
-		//}
-		//if (idx < 16) b[idx] = 0;
 		int aInt = Integer.valueOf(MMtoLift);
+		if (aInt < 0) { //No negatives please. This is a value for lift, not dig.
+		aInt = -aInt;
+		}
 		Point3d mmtolift = new Point3d();
 		mmtolift.z = aInt;
 		Point3d steps = machine.mmToSteps(mmtolift);
