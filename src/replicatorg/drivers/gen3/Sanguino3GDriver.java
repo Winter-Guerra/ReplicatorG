@@ -549,7 +549,7 @@ public class Sanguino3GDriver extends SerialDriver
 	}
 		
 
-public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing in progress! Please pardon our dust! //M139
+public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //super beta testing in progress! Please pardon our dust! //M139
 
 //The varibles plugged in will be used at some point or another. Just not now.		
 
@@ -602,7 +602,6 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 		Base.logger.info("Reached queue. Sending command to Makerbot.");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
 		pb.add8(flags);
-		pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active)
 		pb.add32((int) micros);
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
@@ -1309,11 +1308,12 @@ public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrat
 	/// 00-01 - EEPROM data version
 	/// 02    - Axis inversion byte
 	/// 32-47 - Machine name (max. 16 chars)
-	/// 256-267 Autohome axis varibles
-	/// 268-271 Amount to move Zstage up during a home or safemove.
+	/// 256	    Autohome direction setting (up or down)
+	/// 257-268 Autohome axis varibles
+	/// 269-272 Amount to move Zstage up during a home or safemove.
 	final private static int EEPROM_CHECK_OFFSET = 0;
 	final private static int EEPROM_MACHINE_NAME_OFFSET = 32;
-	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 268;
+	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 269;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
 	final static class ECThermistorOffsets {

@@ -180,7 +180,7 @@ public interface Driver {
 	
 	//regular everyday use of the auto raft script
 
-	public void autoCalibration(EnumSet<Axis> axes, boolean positive, double feedrate);
+	public void autoCalibration(EnumSet<Axis> axes, double feedrate);
 	
 
 	/**

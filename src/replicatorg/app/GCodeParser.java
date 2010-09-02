@@ -564,7 +564,7 @@ public class GCodeParser {
 				
 			//Auto raft calibration. Super Beta testing phase! Please pardon our dust! M139
 			case 139:
-				driver.autoCalibration(EnumSet.allOf(Axis.class),hasCode("U"),0); //Axis, direction, feedrate (Zero means default fastest. Direction is defined by if the command has a U [U for up]. Falls back on down as default if no code was seen.)
+				driver.autoCalibration(EnumSet.allOf(Axis.class),0); //Axis, feedrate (Zero means default fastest. Direction is defined already on the makerbot by the first time calibration.)
 				break;
 
 			// initialize to default state.
