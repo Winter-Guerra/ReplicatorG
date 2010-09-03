@@ -489,11 +489,7 @@ public class Sanguino3GDriver extends SerialDriver
 		//Base.logger.info(String.valueOf(micros)); //spit out micros (For debugging purposes.)
 }
 
-	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //super beta testing in progress! Please pardon our dust! //M138
-
-//The varibles plugged in will be used at some point or another. Just not now.		
-
-//Soon to be first time auto calibration script for the makerbot.
+	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //Auto homing first calibration script. Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
@@ -537,23 +533,17 @@ public class Sanguino3GDriver extends SerialDriver
 		// calculate ticks
 		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
 		// send it!
-		Base.logger.info("Reached queue. Sending command to Makerbot.");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode());
 		pb.add8(flags); //axis to home.
 		pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active)
 		pb.add32((int) micros); //feedrate
 		pb.add16(60); // default homing timeout is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
-		runCommand(pb.getPacket()); //send the command.
-		Base.logger.info("Command sent!");		
+		runCommand(pb.getPacket()); //send the command.		
 		
 	}
 		
 
-public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //super beta testing in progress! Please pardon our dust! //M139
-
-//The varibles plugged in will be used at some point or another. Just not now.		
-
-//Soon to be first time auto calibration script for the makerbot.
+public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing script. //Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
@@ -599,13 +589,11 @@ public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //super beta 
 		// calculate ticks
 		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
 		// send it!
-		Base.logger.info("Reached queue. Sending command to Makerbot.");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
 		pb.add8(flags);
 		pb.add32((int) micros);
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
-		Base.logger.info("Command sent!");
 		//while (isFinished() != true) { //wait till isfinished homing
 		//}
 		

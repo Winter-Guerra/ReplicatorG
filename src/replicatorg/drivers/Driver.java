@@ -174,11 +174,11 @@ public interface Driver {
 	public void homeAxes(EnumSet<Axis> axes, boolean positive, double feedrate);
 
 	/**
-	*First Autoraft script. SUPER BETA TESTING!
+	*First Autoraft script.
 	*/
 	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate);
 	
-	//regular everyday use of the auto raft script
+	//regular everyday use of the auto home script
 
 	public void autoCalibration(EnumSet<Axis> axes, double feedrate);
 	
