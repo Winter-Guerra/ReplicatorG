@@ -559,7 +559,7 @@ public class GCodeParser {
 
 			//First time raft calibration. Super Beta testing phase! Please pardon our dust! M138
 			case 138:
-				driver.firstCalibration(EnumSet.allOf(Axis.class),hasCode("U"),0); //Axis, direction, feedrate (Zero means default fastest. Direction is defined by if the command has a U [U for up] {probably should make it "UP" just to keep things user friendly and self explanatory}. Falls back on homing down as default if no code was seen.)
+				driver.firstCalibration(EnumSet.allOf(Axis.class),true,0); //Axis, direction, feedrate (Zero means default fastest.)
 				break;
 				
 			//Auto raft calibration. Super Beta testing phase! Please pardon our dust! M139
