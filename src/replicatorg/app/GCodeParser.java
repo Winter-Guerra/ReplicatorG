@@ -557,12 +557,12 @@ public class GCodeParser {
 				// driver.setRange();
 				break;
 
-			//First time raft calibration. Super Beta testing phase! Please pardon our dust! M138
+			//First time raft calibration. M138
 			case 138:
 				driver.firstCalibration(EnumSet.allOf(Axis.class),true,0); //Axis, direction, feedrate (Zero means default fastest.)
 				break;
 				
-			//Auto raft calibration. Super Beta testing phase! Please pardon our dust! M139
+			//Auto raft calibration. M139
 			case 139:
 				driver.autoCalibration(EnumSet.allOf(Axis.class),0); //Axis, feedrate (Zero means default fastest. Direction is defined already on the makerbot by the first time calibration.)
 				break;
