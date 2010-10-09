@@ -328,7 +328,7 @@ public class DriverBaseImplementation implements Driver {
 	/***************************************************************************
 	 * Auto raft first calibration script. //Made by Intern Winter
 	 **************************************************************************/
-	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) {
+	public void firstCalibration(byte direction[], double feedrate) {
 	}
 	
 	/***************************************************************************

@@ -176,7 +176,7 @@ public interface Driver {
 	/**
 	*First Autoraft script.
 	*/
-	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate);
+	public void firstCalibration(byte direction[], double feedrate);
 	
 	//regular everyday use of the auto home script
 

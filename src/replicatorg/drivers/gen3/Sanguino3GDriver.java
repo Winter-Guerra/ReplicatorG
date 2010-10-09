@@ -489,12 +489,20 @@ public class Sanguino3GDriver extends SerialDriver
 		//Base.logger.info(String.valueOf(micros)); //spit out micros (For debugging purposes.)
 }
 
-	public void firstCalibration(EnumSet<Axis> axes, boolean positive, double feedrate) { //Auto homing first calibration script. Made by Intern Winter
+	public void firstCalibration(byte direction[], double feedrate) { //Auto homing first calibration script. Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
 
 		byte flags = 0x00;
+		
+		/*
+		---order of packets to send---
+		command_buffer.pop(); // remove the command
+		pop8 direction packets (one for each axis)
+		uint32_t feedrate = pop32(); // feedrate in us per step
+		uint16_t timeout_s = pop16(); //The time to home for before giving up.
+		*/
 		
 		Point3d p = new Point3d(); //0,0,0. We already know that we should be here at the end of this.
 		
@@ -514,18 +522,18 @@ public class Sanguino3GDriver extends SerialDriver
 		
 		Point3d target = new Point3d();
 		
-		if (axes.contains(Axis.X)) {
-			flags += 1;
+		if (direction[0] != 0) {
+			//flags += 1;
 			feedrate = Math.min(feedrate, maxFeedrates.x);
 			target.x = 1; // just to give us feedrate info.
 		}
-		if (axes.contains(Axis.Y)) {
-			flags += 2;
+		if (direction[1] != 0) {
+			//flags += 2;
 			feedrate = Math.min(feedrate, maxFeedrates.y);
 			target.y = 1; // just to give us feedrate info.
 		}
-		if (axes.contains(Axis.Z)) {
-			flags += 4;
+		if (direction[2] != 0) {
+			//flags += 4;
 			feedrate = Math.min(feedrate, maxFeedrates.z);
 			target.z = 1; // just to give us feedrate info.
 		}
@@ -534,8 +542,12 @@ public class Sanguino3GDriver extends SerialDriver
 		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
 		// send it!
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode());
-		pb.add8(flags); //axis to home.
-		pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active)
+		for (int i = 0; i < 3; i++) {
+		pb.add8(direction[i]);
+		}
+		
+		//pb.add8(flags); //axis to home.
+		//pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active)
 		pb.add32((int) micros); //feedrate
 		pb.add16(60); // default homing timeout is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket()); //send the command.		

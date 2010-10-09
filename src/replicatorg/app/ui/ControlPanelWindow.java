@@ -145,7 +145,7 @@ public class ControlPanelWindow extends JFrame implements
 		});
 		return item;
 	}
-	private JMenuItem makeFirstTimeAutoHomeItem(String name,final EnumSet<Axis> set,final boolean positive) { //subroutine to add two new autohome routines to the Homing menu.
+	private JMenuItem makeFirstTimeAutoHomeItem(String name,final byte x, final byte y, final byte z,) { //subroutine to add two new autohome routines to the Homing menu.
 		JMenuItem firstautoitem = new JMenuItem(name);
 		firstautoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent f) {
