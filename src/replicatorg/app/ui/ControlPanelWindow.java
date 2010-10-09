@@ -145,11 +145,12 @@ public class ControlPanelWindow extends JFrame implements
 		});
 		return item;
 	}
-	private JMenuItem makeFirstTimeAutoHomeItem(String name,final byte x, final byte y, final byte z,) { //subroutine to add two new autohome routines to the Homing menu.
+	private JMenuItem makeFirstTimeAutoHomeItem(String name,final byte x, final byte y, final byte z) { //subroutine to add two new autohome routines to the Homing menu.
 		JMenuItem firstautoitem = new JMenuItem(name);
 		firstautoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent f) {
-				driver.firstCalibration(set,positive,0);
+			byte direction[] = {x, y, z};
+				driver.firstCalibration(direction,0);
 			}
 		});
 		return firstautoitem;
@@ -182,8 +183,8 @@ private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subr
 		homeMenu.add(makeHomeItem("Home all-",EnumSet.allOf(Axis.class),false));
 		homeMenu.add(makeHomeItem("Home XZ-",EnumSet.of(Axis.X,Axis.Z),false));
 		homeMenu.add(makeHomeItem("Home YZ-",EnumSet.of(Axis.Y,Axis.Z),false));
-		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",EnumSet.allOf(Axis.class),true)); //auto home downwards and save the distance
-		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",EnumSet.allOf(Axis.class),false)); //auto home downwards and save the distance
+		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",(byte)2,(byte)2,(byte)2)); //auto home downwards and save the distance
+		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
 		homeMenu.add(makeAutoHomeItem("Auto Home All",EnumSet.allOf(Axis.class))); //auto home downwards from the saved distance
 		return bar;
 	}

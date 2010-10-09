@@ -562,6 +562,13 @@ public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing
 
 		
 		byte flags = 0x00;
+		
+		/*
+		---order of packets to send---
+		command_buffer.pop(); // remove the command
+		uint32_t feedrate = pop32(); // feedrate in us per step
+		uint16_t timeout_s = pop16(); //The time to home for before giving up.
+		*/
 
 		//We know where we should be. 0,0,0! (We only have to tell ourselves that we will be at 000. The machine will automatically know.)
 		Point3d p = new Point3d(); //0,0,0
