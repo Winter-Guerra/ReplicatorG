@@ -1315,12 +1315,16 @@ public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing
 	/// 00-01 - EEPROM data version
 	/// 02    - Axis inversion byte
 	/// 32-47 - Machine name (max. 16 chars)
-	/// 256	    Autohome direction setting (up or down)
-	/// 257-268 Autohome axis varibles
-	/// 269-272 Amount to move Zstage up during a home or safemove.
+	/// 0x100, 0x101, 0x102. 256, 257, 258. Autohome direction settings (0 for axis disabled, 1 for -, 2 for +) 1 per each axis.
+	/// 0x103-06, 0x107-0x10a, 0x10b-0x10e. 259-262, 263-266, 267-270. Steps to move per axis. (Autohome axis varibles)
+	/// 0x10f-0x112. 271-274. Amount to move Zstage up during a home or safemove.
+
+	
 	final private static int EEPROM_CHECK_OFFSET = 0;
 	final private static int EEPROM_MACHINE_NAME_OFFSET = 32;
-	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 269;
+	final private static int EEPROM_AUTOHOME_DIRECTIONS = 256;
+	final private static int EEPROM_AUTOHOME_STEPS_PER_AXIS = 259;
+	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 271;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
 	final static class ECThermistorOffsets {
