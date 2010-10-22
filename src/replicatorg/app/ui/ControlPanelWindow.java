@@ -185,6 +185,7 @@ private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subr
 		homeMenu.add(makeHomeItem("Home YZ-",EnumSet.of(Axis.Y,Axis.Z),false));
 		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",(byte)2,(byte)2,(byte)2)); //auto home downwards and save the distance
 		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
+		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home +-+",(byte)2,(byte)1,(byte)2)); //auto home downwards and save the distance
 		homeMenu.add(makeAutoHomeItem("Auto Home All",EnumSet.allOf(Axis.class))); //auto home downwards from the saved distance
 		return bar;
 	}
