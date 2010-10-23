@@ -493,8 +493,6 @@ public class Sanguino3GDriver extends SerialDriver
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
-
-		//byte flags = 0x00;
 		
 		/*
 		---order of packets to send---
@@ -523,17 +521,14 @@ public class Sanguino3GDriver extends SerialDriver
 		Point3d target = new Point3d();
 		
 		if (direction[0] != 0) {
-			//flags += 1;
 			feedrate = Math.min(feedrate, maxFeedrates.x);
 			target.x = 1; // just to give us feedrate info.
 		}
 		if (direction[1] != 0) {
-			//flags += 2;
 			feedrate = Math.min(feedrate, maxFeedrates.y);
 			target.y = 1; // just to give us feedrate info.
 		}
 		if (direction[2] != 0) {
-			//flags += 4;
 			feedrate = Math.min(feedrate, maxFeedrates.z);
 			target.z = 1; // just to give us feedrate info.
 		}
@@ -547,9 +542,6 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add8(direction[i]); //send the directions!
 		}
 		
-		//pb.add8(flags); //axis to home.
-		//pb.add8((positive)?1:0); //send the makerbot 1 or 0 depending on the direction we want to go. (not currently active) Deprecated.
-		
 		pb.add32((int) micros); //feedrate
 		pb.add16(60); // default homing timeout is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket()); //send the command.		
@@ -561,9 +553,6 @@ public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first raft calibration script.");
 		}
-
-		
-		byte flags = 0x00;
 		
 		/*
 		---order of packets to send---
@@ -592,17 +581,14 @@ public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing
 		Point3d target = new Point3d();
 		
 		if (axes.contains(Axis.X)) {
-			flags += 1;
 			feedrate = Math.min(feedrate, maxFeedrates.x);
 			target.x = 1; // just to give us feedrate info.
 		}
 		if (axes.contains(Axis.Y)) {
-			flags += 2;
 			feedrate = Math.min(feedrate, maxFeedrates.y);
 			target.y = 1; // just to give us feedrate info.
 		}
 		if (axes.contains(Axis.Z)) {
-			flags += 4;
 			feedrate = Math.min(feedrate, maxFeedrates.z);
 			target.z = 1; // just to give us feedrate info.
 		}
@@ -611,7 +597,6 @@ public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing
 		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
 		// send it!
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
-		//pb.add8(flags); //not needed. All has been replaced by EEPROM.
 		pb.add32((int) micros);
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
