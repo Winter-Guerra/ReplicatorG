@@ -30,6 +30,7 @@ package replicatorg.app.ui;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.EnumSet;
@@ -44,10 +45,12 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -166,6 +169,24 @@ private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subr
 		return autoitem;
 	}
 
+public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
+		JMenuItem firstTimeHomeWindow = new JMenuItem(name);
+		firstTimeHomeWindow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent h) {
+				HomingSetupWindow home = HomingSetupWindow.getHomingWindow(machine);
+				if (home != null) {
+					home.pack();
+					home.setVisible(true);
+					home.toFront();
+				}
+				//HomingSetupWindow eop = HomingSetupWindow.HomingSetupWindow(machine);
+				//eop.setVisible(true);
+		}
+	});
+		return firstTimeHomeWindow;
+	}
+
+
 	protected JMenuBar createMenuBar() {
 		JMenuBar bar = new JMenuBar();
 		JMenu homeMenu = new JMenu("Homing");
@@ -187,6 +208,7 @@ private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subr
 		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
 		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home +-+",(byte)2,(byte)1,(byte)2)); //auto home downwards and save the distance
 		homeMenu.add(makeAutoHomeItem("Auto Home All",EnumSet.allOf(Axis.class))); //auto home downwards from the saved distance
+		homeMenu.add(makeFirstTimeAutohomeWindowItem("First Time Home Window"));
 		return bar;
 	}
 
