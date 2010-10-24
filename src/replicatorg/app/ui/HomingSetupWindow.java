@@ -19,6 +19,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
+import replicatorg.app.MachineController;
+import replicatorg.app.ui.controlpanel.Endstop3AxisPanel;
+import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
 import replicatorg.machine.model.Axis;
@@ -32,33 +35,15 @@ public class HomingSetupWindow extends JFrame {
 	private static final long serialVersionUID = 7876192459063774731L;
 	private final OnboardParameters target;
 	private final Driver driver;
-	//private JTextField machineNameField = new JTextField();
-	//private JCheckBox xAxisInvertBox = new JCheckBox();
-	//private JCheckBox yAxisInvertBox = new JCheckBox();
+	protected JPanel mainPanel;
+	protected Endstop3AxisPanel EndstopPanel;
 	private JCheckBox ZaggoZprobe = new JCheckBox();
 	private JTextField zAxisMMToLift = new JTextField();
-	//private JButton extruderButton = new JButton("Edit extruder parameters");
-	/*private static final String[]  endstopInversionChoices = {
-		"No endstops installed",
-		"Inverted (Default; H21LOB-based enstops)",
-		"Non-inverted (H21LOI-based endstops)"
-	};*/
-	//private JComboBox endstopInversionSelection = new JComboBox(endstopInversionChoices);
-	//private static final int MAX_NAME_LENGTH = 16;
+	
+	private static HomingSetupWindow instance = null;
 	
 	private void commit() {
-		//target.setMachineName(machineNameField.getText());
 		target.setZstageMMtoLift(zAxisMMToLift.getText());
-		//EnumSet<Axis> axesInverted = EnumSet.noneOf(Axis.class);
-		//if (xAxisInvertBox.isSelected()) axesInverted.add(Axis.X);
-		//if (yAxisInvertBox.isSelected()) axesInverted.add(Axis.Y);
-		//if (zAxisInvertBox.isSelected()) axesInverted.add(Axis.Z);
-		//target.setInvertedParameters(axesInverted);
-		//int idx = endstopInversionSelection.getSelectedIndex();
-		//OnboardParameters.EndstopType endstops = 
-			//OnboardParameters.EndstopType.values()[idx]; 
-		//target.setInvertedEndstops(endstops);
-		//resetDialog();
 	}
 
 	private JPanel makeButtonPanel() {
@@ -92,20 +77,3 @@ public class HomingSetupWindow extends JFrame {
 		panel.add(zAxisMMToLift,"wrap");
 	}
 }
-		/*extruderButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				ExtruderOnboardParameters eop = new ExtruderOnboardParameters(HomingSetupWindow.this.target);
-				eop.setVisible(true);
-			}
-		}); */
-		//panel.add(extruderButton,"wrap");
-
-		/*resetToFactoryButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				HomingSetupWindow.this.resetToFactory();
-				// Reload
-				loadParameters();
-			}
-			//textArea.setWrapStyleWord(true);
-		});
-		panel.add(resetToFactoryButton,"wrap");*/
