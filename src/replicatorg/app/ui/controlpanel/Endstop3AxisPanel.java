@@ -44,6 +44,10 @@ public class Endstop3AxisPanel extends JPanel implements ActionListener
 	//protected JTextField yPosField;
 	//protected JTextField zPosField;
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	protected MachineController machine;
 	protected Driver driver;
 
@@ -99,111 +103,41 @@ public class Endstop3AxisPanel extends JPanel implements ActionListener
 		//jogRate = 10.0;
 		//jogPattern = Pattern.compile("([.0-9]+)");
 
-		JButton xPlusButton = createEndstopButton("X+", "Jog X axis in positive direction");
-		JButton xMinusButton = createEndstopButton("X-", "Jog X axis in negative direction");
-		JButton xCenterButton = createEndstopButton("<html><center>Center<br/>X", "Jog X axis to the origin","Center X");
-		JButton yPlusButton = createEndstopButton("Y+", "Jog Y axis in positive direction");
-		JButton yMinusButton = createEndstopButton("Y-", "Jog Y axis in negative direction");
-		JButton yCenterButton = createEndstopButton("<html><center>Center<br/>Y", "Jog Y axis to the origin","Center Y");
-		JButton zPlusButton = createEndstopButton("Z+", "Jog Z axis in positive direction");
-		JButton zMinusButton = createEndstopButton("Z-", "Jog Z axis in negative direction");
-		JButton zCenterButton = createEndstopButton("<html><center>Center<br/>Z", "Jog Z axis to the origin","Center Z");
-		JButton zeroButton = createEndstopButton("<html><center>Set<br/>zero","Mark Current Position as Zero (0,0,0)","Zero");
+		JButton xPlusButton = createEndstopButton("X+", "Home X axis in positive direction");
+		JButton xMinusButton = createEndstopButton("X-", "Home X axis in negative direction");
+		//JButton xCenterButton = createEndstopButton("<html><center>Center<br/>X", "Jog X axis to the origin","Center X");
+		JButton yPlusButton = createEndstopButton("Y+", "Home Y axis in positive direction");
+		JButton yMinusButton = createEndstopButton("Y-", "Home Y axis in negative direction");
+		//JButton yCenterButton = createEndstopButton("<html><center>Center<br/>Y", "Jog Y axis to the origin","Center Y");
+		JButton zPlusButton = createEndstopButton("Z+", "Home Z axis in positive direction");
+		JButton zMinusButton = createEndstopButton("Z-", "Home Z axis in negative direction");
+		//JButton zCenterButton = createEndstopButton("<html><center>Center<br/>Z", "Jog Z axis to the origin","Center Z");
+		//JButton zeroButton = createEndstopButton("<html><center>Set<br/>zero","Mark Current Position as Zero (0,0,0)","Zero");
 
 		JPanel xyzPanel = new JPanel(new MigLayout("","[]0[]","[]0[]"));
-        xyzPanel.add(zCenterButton, "split 3,flowy,gap 0 0 0 0");
-		xyzPanel.add(xMinusButton, "gap 0 0 0 0");
-        xyzPanel.add(yCenterButton);
-		xyzPanel.add(yPlusButton, "split 3,flowy,gap 0 0 0 0");
-		xyzPanel.add(zeroButton,"gap 0 0 0 0");
-		xyzPanel.add(yMinusButton);
-		xyzPanel.add(xPlusButton,"split 2, flowy, aligny bottom, gap 0 0 0 0, gapafter 10");
-        xyzPanel.add(xCenterButton);
+        //xyzPanel.add(zCenterButton, "split 3,flowy,gap 0 0 0 0");
+		xyzPanel.add(xMinusButton, "cell 0 1, gap 0 0 0 0");
+        //xyzPanel.add(yCenterButton);
+		xyzPanel.add(yPlusButton, "split 2, flowy, gapbottom 54");
+		//xyzPanel.add(zeroButton,"gap 0 0 0 0");
+		xyzPanel.add(yMinusButton, "gap 0 0 0 0");
+		xyzPanel.add(xPlusButton,"cell 2 1, gapafter 10");
+       //xyzPanel.add(xCenterButton);
 		xyzPanel.add(zPlusButton, "split 2,flowy,gap 0 0 0 0");
 		xyzPanel.add(zMinusButton);
 
 		// create our position panel
-		JPanel positionPanel = new JPanel(new MigLayout("flowy"));
+		//JPanel positionPanel = new JPanel(new MigLayout("flowy"));
 		// our label
-		positionPanel.add(new JLabel("Jog Size"));
-		// create our jog size dropdown
-		//JComboBox jogList = new JComboBox(jogStrings);
-		//jogList.setSelectedIndex(6);
-		//jogList.setActionCommand("jog size");
-		//jogList.addActionListener(this);
-		//positionPanel.add(jogList,"growx");
+		//positionPanel.add(new JLabel("Jog Size"));
 		
-		// our position text boxes
-		//xPosField = createDisplayField();
-		//yPosField = createDisplayField();
-		//zPosField = createDisplayField();
-
-		//positionPanel.add(new JLabel("X Position"));
-		//positionPanel.add(xPosField,"growx");
-		//positionPanel.add(new JLabel("Y Position"));
-		//positionPanel.add(yPosField,"growx");
-		//positionPanel.add(new JLabel("Z Position"));
-		//positionPanel.add(zPosField,"growx");
-
-		// create the xyfeedrate panel
-		/*
-		JPanel feedratePanel = new JPanel(new MigLayout());
-
-		int maxXYFeedrate = (int) Math.min(machine.getModel().getMaximumFeedrates().x, 
-				machine.getModel().getMaximumFeedrates().y);
-		int currentXYFeedrate = Math.min(maxXYFeedrate, Base.preferences
-				.getInt("controlpanel.feedrate.xy",480));
-		xyFeedrateSlider = new JSlider(JSlider.HORIZONTAL, 1, maxXYFeedrate,
-				currentXYFeedrate);
-		xyFeedrateSlider.setMajorTickSpacing(1000);
-		xyFeedrateSlider.setMinorTickSpacing(100);
-		xyFeedrateSlider.setName("xy-feedrate-slider");
-		xyFeedrateSlider.addChangeListener(this);
-
-		// our display box
-		xyFeedrateValue = new JTextField();
-		xyFeedrateValue.setEnabled(true);
-		xyFeedrateValue.setName("xy-feedrate-value");
-		xyFeedrateValue.setText(Integer.toString(xyFeedrateSlider.getValue()));
-		xyFeedrateValue.addFocusListener(this);
-		xyFeedrateValue.setActionCommand("handleTextfield");
-		xyFeedrateValue.addActionListener(this);
-
-
-		// create our z slider
-		int maxZFeedrate = (int) machine.getModel().getMaximumFeedrates().z;
-		int currentZFeedrate = Math.min(maxZFeedrate, 
-				Base.preferences.getInt("controlpanel.feedrate.z",480));
-		zFeedrateSlider = new JSlider(JSlider.HORIZONTAL, 1, maxZFeedrate,
-				currentZFeedrate);
-		zFeedrateSlider.setMajorTickSpacing(10);
-		zFeedrateSlider.setMinorTickSpacing(1);
-		zFeedrateSlider.setName("z-feedrate-slider");
-		zFeedrateSlider.addChangeListener(this);
-
-		// our display box
-		zFeedrateValue = new JTextField();
-		zFeedrateValue.setEnabled(true);
-		zFeedrateValue.setName("z-feedrate-value");
-		zFeedrateValue.setText(Integer.toString(zFeedrateSlider.getValue()));
-		zFeedrateValue.addFocusListener(this);
-		zFeedrateValue.setActionCommand("handleTextfield");
-		zFeedrateValue.addActionListener(this);
-
-		feedratePanel.add(new JLabel("XY Feedrate (mm/min.)"));
-		feedratePanel.add(xyFeedrateSlider,"growx");
-		feedratePanel.add(xyFeedrateValue,"wrap");
-		feedratePanel.add(new JLabel("Z Feedrate (mm/min.)"));
-		feedratePanel.add(zFeedrateSlider,"growx");
-		feedratePanel.add(zFeedrateValue,"wrap");
-		 */
 		// add it all to our jog panel
 		add(xyzPanel);
-		add(positionPanel,"growx,wrap");
+		//add(positionPanel,"growx,wrap");
 		//add(feedratePanel,"growx,spanx");
 
 		// add jog panel border and stuff.
-		setBorder(BorderFactory.createTitledBorder("Homing Endstop chooser"));
+		setBorder(BorderFactory.createTitledBorder("Homing Endstops"));
 	
 	}
 	

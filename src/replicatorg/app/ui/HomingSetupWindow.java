@@ -58,13 +58,14 @@ public class HomingSetupWindow extends JFrame {
 	private JPanel makeButtonPanel() { //add the commit and cancel buttons to a panel
 		JPanel panel = new JPanel(new MigLayout());
 		JButton commitButton = new JButton("Commit homing settings");
-		panel.add(commitButton);
 		commitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				HomingSetupWindow.this.commit();
 				HomingSetupWindow.this.dispose();				
 			}
 		});
+		panel.add(commitButton);
+		
 		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -75,7 +76,7 @@ public class HomingSetupWindow extends JFrame {
 		return panel;
 	}
 	
-	protected JComponent createJogPanel() {
+	protected JComponent createEndstopPanel() {
 		EndstopPanel = new Endstop3AxisPanel(machine);
 		return EndstopPanel;
 	}
@@ -101,13 +102,17 @@ public class HomingSetupWindow extends JFrame {
 		
 		//Title in the bar up top.
 		//label description of what this window is about
+		
 		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must select three endstops"
 				+ "<br>" + "(one on each axis) that are currently installed on your bot." + "</html>"); //OMG, do I really have to HTML line breaks? 
 		mainpanel.add(description, "wrap");//moving to next row here...
+		mainpanel.add(createEndstopPanel(),"wrap");
 		//need to add here the YXZ panel
 		//Zaggo support checkbox and description
+		
 		zAxisMMToLift.setColumns(16);
-		mainpanel.add(new JLabel("MM to lift Zstage above build platform when homing. (To avoid crashes)"));
+		mainpanel.add(new JLabel("<html>"+"Milimeters to lift the Zstage above build platform level"
+				+"<br>"+"before attempting to home (To avoid painful nozzle crashes.)"+"</html>")); //Z axis lift
 		mainpanel.add(zAxisMMToLift,"wrap");
 		mainpanel.add(makeButtonPanel());
 		add(mainpanel); //return this panel...
