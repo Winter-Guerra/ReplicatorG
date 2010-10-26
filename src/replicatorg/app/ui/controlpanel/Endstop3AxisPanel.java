@@ -27,26 +27,6 @@ import replicatorg.drivers.Driver;
 
 public class Endstop3AxisPanel extends JPanel implements ActionListener
 {
-	//protected double jogRate;
-
-	//protected Pattern jogPattern;
-
-	//protected String[] jogStrings = { "0.01mm", "0.05mm", "0.1mm", "0.5mm",
-			//"1mm", "5mm", "10mm", "20mm", "50mm" };
-
-	//protected JSlider xyFeedrateSlider;
-	//protected JTextField xyFeedrateValue;
-
-	//protected JSlider zFeedrateSlider;
-	//protected JTextField zFeedrateValue;
-
-	//protected JTextField xPosField;
-	//protected JTextField yPosField;
-	//protected JTextField zPosField;
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	protected MachineController machine;
 	protected Driver driver;

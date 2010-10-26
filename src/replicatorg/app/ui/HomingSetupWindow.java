@@ -47,7 +47,8 @@ public class HomingSetupWindow extends JFrame {
 
 	protected JPanel mainPanel;
 	protected Endstop3AxisPanel EndstopPanel;
-	private JCheckBox ZaggoZprobe = new JCheckBox();
+	private JCheckBox ZaggoZprobe = new JCheckBox("Installed!");
+	private static String DefaultZAxisMMToLift = "10";
 	private JTextField zAxisMMToLift = new JTextField();
 	
 	
@@ -57,7 +58,7 @@ public class HomingSetupWindow extends JFrame {
 
 	private JPanel makeButtonPanel() { //add the commit and cancel buttons to a panel
 		JPanel panel = new JPanel(new MigLayout());
-		JButton commitButton = new JButton("Commit homing settings");
+		JButton commitButton = new JButton("Commit homing settings!");
 		commitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				HomingSetupWindow.this.commit();
@@ -96,24 +97,28 @@ public class HomingSetupWindow extends JFrame {
 	}
 	
 	public HomingSetupWindow(MachineController m) { //set everything up and open homing window...
-		machine = m;
+		super("Homing Setup Window"); //Title in the bar up top.
+		machine = m; //get our drivers
 		driver = machine.getDriver();
-		JPanel mainpanel = new JPanel(new MigLayout());
+		JPanel mainpanel = new JPanel(new MigLayout()); //start setting up the window
 		
-		//Title in the bar up top.
 		//label description of what this window is about
 		
-		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must select three endstops"
-				+ "<br>" + "(one on each axis) that are currently installed on your bot." + "</html>"); //OMG, do I really have to HTML line breaks? 
+		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must first select three endstops"
+				+ "<br>" + "that are currently installed on your 'bot (one for each axis). " + "</html>"); //OMG, do I really have to use HTML line breaks? 
 		mainpanel.add(description, "wrap");//moving to next row here...
-		mainpanel.add(createEndstopPanel(),"wrap");
-		//need to add here the YXZ panel
-		//Zaggo support checkbox and description
+		mainpanel.add(createEndstopPanel(), "wrap");
 		
+		//ask if using Zaggo Z-Probe
+		mainpanel.add(new JLabel("Next tell me, is Zaggo's Z-Probe hardware installed on this 'bot?"), "wrap");
+		mainpanel.add(ZaggoZprobe, "gapleft 30, wrap");
+		
+		//ask for zAxislift value (default 10);
 		zAxisMMToLift.setColumns(16);
-		mainpanel.add(new JLabel("<html>"+"Milimeters to lift the Zstage above build platform level"
-				+"<br>"+"before attempting to home (To avoid painful nozzle crashes.)"+"</html>")); //Z axis lift
-		mainpanel.add(zAxisMMToLift,"wrap");
+		zAxisMMToLift.setText(DefaultZAxisMMToLift);
+		mainpanel.add(new JLabel("<html>"+"Finally, tell me how many millimeters should I lift the Z axis"
+				+"<br>"+"before attempting to home" + "<br>"+ "(To avoid accidental nozzle crashes into the build platform)."+"</html>"), "wrap"); //Z axis lift
+		mainpanel.add(zAxisMMToLift,"gapleft 30, wrap");
 		mainpanel.add(makeButtonPanel());
 		add(mainpanel); //return this panel...
 		//Update Zaxis mm to lift from eeprom settings...
