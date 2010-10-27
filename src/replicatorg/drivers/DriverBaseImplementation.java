@@ -326,16 +326,16 @@ public class DriverBaseImplementation implements Driver {
 	}
 
 	/***************************************************************************
-	 * Auto raft first calibration script. //Made by Intern Winter
+	 * Automatic homing calibration script. //Made by Intern Winter
 	 **************************************************************************/
-	public void firstCalibration(byte direction[], double feedrate) {
+	public void firstHoming(byte direction[], double feedrate) {
 	}
 	
 	/***************************************************************************
 	 * Auto homing script. //Made by Intern Winter
 	 **************************************************************************/
 
-	public void autoCalibration(EnumSet<Axis> axes, double feedrate) {
+	public void autoHoming(EnumSet<Axis> axes, double feedrate) {
 	}
 
 	/***************************************************************************

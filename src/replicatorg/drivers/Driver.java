@@ -174,13 +174,13 @@ public interface Driver {
 	public void homeAxes(EnumSet<Axis> axes, boolean positive, double feedrate);
 
 	/**
-	*First Autoraft script.
+	*First homing script. (Script that calibrates the makerbot homing sequence.)
 	*/
-	public void firstCalibration(byte direction[], double feedrate);
+	public void firstHoming(byte direction[], double feedrate);
 	
 	//regular everyday use of the auto home script
 
-	public void autoCalibration(EnumSet<Axis> axes, double feedrate);
+	public void autoHoming(EnumSet<Axis> axes, double feedrate);
 	
 
 	/**

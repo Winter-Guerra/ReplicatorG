@@ -489,9 +489,9 @@ public class Sanguino3GDriver extends SerialDriver
 		//Base.logger.info(String.valueOf(micros)); //spit out micros (For debugging purposes.)
 }
 
-	public void firstCalibration(byte direction[], double feedrate) { //Auto homing first calibration script. Made by Intern Winter
+	public void firstHoming(byte direction[], double feedrate) { //Auto homing first calibration script. Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
-			Base.logger.log(Level.FINER,"Running first raft calibration script.");
+			Base.logger.log(Level.FINER,"Running first homing script.");
 		}
 		
 		/*
@@ -549,9 +549,9 @@ public class Sanguino3GDriver extends SerialDriver
 	}
 		
 
-public void autoCalibration(EnumSet<Axis> axes, double feedrate) { //Auto homing script. //Made by Intern Winter
+public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing script. //Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
-			Base.logger.log(Level.FINER,"Running first raft calibration script.");
+			Base.logger.log(Level.FINER,"Running homing script.");
 		}
 		
 		/*

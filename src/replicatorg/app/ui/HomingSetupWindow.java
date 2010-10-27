@@ -85,7 +85,7 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 	}
 		//set z mm to lift regardless of anything.
 		((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
-		driver.firstCalibration(direction,0); //fire off the command to the makerbot to start the homing
+		driver.firstHoming(direction,0); //fire off the command to the makerbot to start the homing
 	}
 
 	private JPanel makeButtonPanel() { //add the commit and cancel buttons to a panel

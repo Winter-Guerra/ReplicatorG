@@ -557,15 +557,9 @@ public class GCodeParser {
 				// driver.setRange();
 				break;
 
-			//First time raft calibration. M138
+			//Auto Homing. M139
 			case 138:
-				byte axis[] = {2,2,2};
-				driver.firstCalibration(axis, 0); //Axis directions, feedrate (Zero means default fastest.)
-				break;
-				
-			//Auto raft calibration. M139
-			case 139:
-				driver.autoCalibration(EnumSet.allOf(Axis.class),0); //Axis, feedrate (Zero means default fastest. Direction is defined already on the makerbot by the first time calibration.)
+				driver.autoHoming(EnumSet.allOf(Axis.class),0); //Axis, feedrate (Zero means default fastest. Direction is defined already on the makerbot by the first time calibration.)
 				break;
 
 			// initialize to default state.

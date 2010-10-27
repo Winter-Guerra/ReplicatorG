@@ -153,7 +153,7 @@ public class ControlPanelWindow extends JFrame implements
 		firstautoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent f) {
 			byte direction[] = {x, y, z};
-				driver.firstCalibration(direction,0);
+				driver.firstHoming(direction,0);
 			}
 		});
 		return firstautoitem;
@@ -163,7 +163,7 @@ private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subr
 		JMenuItem autoitem = new JMenuItem(name);
 		autoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent g) {
-				driver.autoCalibration(set,0);
+				driver.autoHoming(set,0);
 			}
 		});
 		return autoitem;
