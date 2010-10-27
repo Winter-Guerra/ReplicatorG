@@ -87,13 +87,14 @@ public class Endstop3AxisPanel extends JPanel implements ActionListener
 		this.driver = machine.getDriver();
 		setLayout(new MigLayout());
 		
-		/*JButton xPlusButton = createEndstopButton("X+", "Home X axis in positive direction");
-		JButton xMinusButton = createEndstopButton("X-", "Home X axis in negative direction");
-		JButton yPlusButton = createEndstopButton("Y+", "Home Y axis in positive direction");
-		JButton yMinusButton = createEndstopButton("Y-", "Home Y axis in negative direction");
-		JButton zPlusButton = createEndstopButton("Z+", "Home Z axis in positive direction");
-		JButton zMinusButton = createEndstopButton("Z-", "Home Z axis in negative direction");
-*/
+		xMinusButton.setSelected(true);
+		xPlusButton.setSelected(false);
+		yMinusButton.setSelected(true);
+		yPlusButton.setSelected(false);
+		zMinusButton.setSelected(false);
+		zPlusButton.setSelected(true);
+		
+	
 		JPanel xyzPanel = new JPanel(new MigLayout("","[]0[]","[]0[]"));
 
 		xyzPanel.add(xMinusButton, "cell 0 1, gap 0 0 0 0");

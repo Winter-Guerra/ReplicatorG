@@ -1,12 +1,12 @@
-/**
- * 
- */
+
 package replicatorg.app.ui;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.EnumSet;
 
 import javax.swing.JButton;
@@ -34,8 +34,8 @@ import replicatorg.drivers.OnboardParameters;
 import replicatorg.machine.model.Axis;
 
 /**
- * A panel for editing the options stored onboard a machine.
- * @author phooky
+ * A panel for initiating the first time homing sequence and all of its settings.
+ * @author xtremd
  *
  */
 public class HomingSetupWindow extends JFrame {
@@ -56,32 +56,36 @@ public class HomingSetupWindow extends JFrame {
 		// if negatives are selected then pass 1 else pass two, if Zaggo z-probe, pass Z 3.
 		byte direction[] = {0,0,0}; //array that holds the direction vals for XYZ. Zaggo Z-Probe is Z = 3.
 		
+		
 if (EndstopPanel.xPlusButton.isSelected()) { //if xPlus button is selected then
 // set x packet to to 2
 	direction[0] = 2;
 	
-} else {
-	//set to 1 (forcing using at least 1 per axis)
+} else if (EndstopPanel.xMinusButton.isSelected()) {
+	//set to 1 
 	direction[0] = 1;
-}
-if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
-	// set x packet to to 2
+} else if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
+	// set y packet to to 2
 		direction[1] = 2;
 		
-	} else {
-		//set to 1 (forcing using at least 1 per axis)
+	} else if (EndstopPanel.yMinusButton.isSelected()) {
+		//set to 1 
 		direction[1] = 1;
 	}
-if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
-	// set x packet to to 2
+if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
+	direction[2] = 3;
+	
+} else if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
+	// set z packet to to 2
 		direction[2] = 2;
 		
-	} else {
-		//set to 1 (forcing using at least 1 per axis)
+	} else if (EndstopPanel.zMinusButton.isSelected()){
+		//set to 1 
 		direction[2] = 1;
 	}
-		//set z mm
+		//set z mm to lift regardless of anything.
 		((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
+		driver.firstCalibration(direction,0); //fire off the command to the makerbot to start the homing
 	}
 
 	private JPanel makeButtonPanel() { //add the commit and cancel buttons to a panel
@@ -116,8 +120,20 @@ if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
 		
 		//ask if using Zaggo Z-Probe
 		panel.add(new JLabel("Next tell me, is Zaggo's Z-Probe hardware installed on this 'bot?"), "gaptop 25, wrap");
-		panel.add(ZaggoZprobe, "gapleft 30, wrap");
-		
+		ZaggoZprobe.addItemListener( //listen to ZaggoZprobe checkbox
+			    new ItemListener() {
+			        public void itemStateChanged(ItemEvent e) {
+			            // Turn off Z axis buttons whenever box is checked
+			        	if (ZaggoZprobe.isSelected()) {
+			        		EndstopPanel.zMinusButton.setEnabled(false);
+			        		EndstopPanel.zPlusButton.setEnabled(false);
+			        	} else { //turn back on when unchecked
+			        		EndstopPanel.zMinusButton.setEnabled(true);
+			        		EndstopPanel.zPlusButton.setEnabled(true);
+			        	}
+			        }
+			    } );
+			    panel.add(ZaggoZprobe, "gapleft 30, wrap");
 		//ask for zAxislift value (default 10);
 		zAxisMMToLift.setColumns(16);
 		zAxisMMToLift.setText(DefaultZAxisMMToLift);
