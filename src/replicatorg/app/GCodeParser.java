@@ -557,7 +557,7 @@ public class GCodeParser {
 				// driver.setRange();
 				break;
 
-			//Auto Homing. M139
+			//Auto Homing. M138
 			case 138:
 				driver.autoHoming(EnumSet.allOf(Axis.class),0); //Axis, feedrate (Zero means default fastest. Direction is defined already on the makerbot by the first time calibration.)
 				break;

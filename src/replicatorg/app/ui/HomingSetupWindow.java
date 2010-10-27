@@ -64,7 +64,8 @@ if (EndstopPanel.xPlusButton.isSelected()) { //if xPlus button is selected then
 } else if (EndstopPanel.xMinusButton.isSelected()) {
 	//set to 1 
 	direction[0] = 1;
-} else if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
+}
+if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 	// set y packet to to 2
 		direction[1] = 2;
 		

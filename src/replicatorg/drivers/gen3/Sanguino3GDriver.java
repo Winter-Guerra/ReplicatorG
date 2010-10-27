@@ -498,7 +498,7 @@ public class Sanguino3GDriver extends SerialDriver
 		---order of packets to send---
 		command_buffer.pop(); // remove the command
 		pop8 direction packets (one for each axis)
-		uint32_t feedrate = pop32(); // feedrate in us per step
+		uint32_t feedrate = pop32(); // feedrate in us per step (one for each axis)
 		uint16_t timeout_s = pop16(); //The time to home for before giving up.
 		*/
 		
@@ -557,7 +557,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		/*
 		---order of packets to send---
 		command_buffer.pop(); // remove the command
-		uint32_t feedrate = pop32(); // feedrate in us per step
+		uint32_t feedrate = pop32(); // feedrate in us per step (one per axis)
 		uint16_t timeout_s = pop16(); //The time to home for before giving up.
 		*/
 
