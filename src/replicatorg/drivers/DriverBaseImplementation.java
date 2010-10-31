@@ -340,14 +340,14 @@ public class DriverBaseImplementation implements Driver {
 	/***************************************************************************
 	 * Automatic homing calibration script. //Made by Intern Winter
 	 **************************************************************************/
-	public void firstHoming(byte direction[], double feedrate) {
+	public void firstHoming(byte direction[], double feedrate) throws RetryException {
 	}
 	
 	/***************************************************************************
 	 * Auto homing script. //Made by Intern Winter
 	 **************************************************************************/
 
-	public void autoHoming(EnumSet<Axis> axes, double feedrate) {
+	public void autoHoming(EnumSet<Axis> axes, double feedrate) throws RetryException {
 	}
 
 	/***************************************************************************

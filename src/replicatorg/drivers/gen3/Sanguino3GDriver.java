@@ -527,7 +527,7 @@ public class Sanguino3GDriver extends SerialDriver
 		//Base.logger.info(String.valueOf(micros)); //spit out micros (For debugging purposes.)
 }
 
-	public void firstHoming(byte direction[], double feedrate) { //Auto homing first calibration script. Made by Intern Winter
+	public void firstHoming(byte direction[], double feedrate) throws RetryException { //Auto homing first calibration script. Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first homing script.");
 		}
@@ -587,7 +587,7 @@ public class Sanguino3GDriver extends SerialDriver
 	}
 		
 
-public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing script. //Made by Intern Winter
+public void autoHoming(EnumSet<Axis> axes, double feedrate) throws RetryException { //Auto homing script. //Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running homing script.");
 		}
@@ -1313,7 +1313,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WRITE_EEPROM32.getCode());
 		pb.add16(offset);
 		pb.add32(data);
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		//assert pr.get32() == data.length; 
 	}
 

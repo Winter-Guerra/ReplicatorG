@@ -32,6 +32,8 @@ import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
 import replicatorg.machine.model.Axis;
+import replicatorg.drivers.RetryException;
+import replicatorg.app.Base;
 
 /**
  * A panel for initiating the first time homing sequence and all of its settings.
@@ -86,7 +88,12 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 	}
 		//set z mm to lift regardless of anything.
 		((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
+		
+		try {
 		driver.firstHoming(direction,0); //fire off the command to the makerbot to start the homing
+		} catch (RetryException e1) {
+		Base.logger.severe("Can't setup homing; machine busy");
+		}
 	}
 
 	private JPanel makeButtonPanel() { //add the commit and cancel buttons to a panel
