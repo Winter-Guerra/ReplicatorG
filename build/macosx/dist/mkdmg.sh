@@ -14,14 +14,14 @@ TEMP="TEMPORARY"
 
 cd $BASE
 
-hdiutil create -megabytes 20 $DEST$TEMP.dmg -layout NONE
+hdiutil create -megabytes 50 $DEST$TEMP.dmg -layout NONE
 MY_DISK=`hdid -nomount $DEST$TEMP.dmg`
 echo My Dist $MY_DISK
 newfs_hfs -v $VOLUME $MY_DISK
 hdiutil eject $MY_DISK
 hdid $DEST$TEMP.dmg
 chflags -R nouchg,noschg "$SRC"
-ditto -rsrcFork -v "$SRC" "/Volumes/$VOLUME"
+ditto -rsrcFork -v "$SRC" "/Volumes/$VOLUME/$VOLUME"
 #ditto -rsrcFork -v "./background/" "/Volumes/$VOLUME"
 hdiutil eject $MY_DISK
 hdiutil convert -format UDCO $DEST$TEMP.dmg -o $VOLUME.dmg

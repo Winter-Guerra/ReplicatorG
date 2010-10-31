@@ -52,6 +52,7 @@ public class Build {
 	/** Name of source file, used by load().  Recognized types so far are:
 	 * .stl - model file
 	 * .obj - model file
+	 * .dae - model file
 	 * .gcode - gcode file
 	 * .zip - composite build file
 	 */
@@ -107,7 +108,7 @@ public class Build {
 				parentPath = ".";
 			}
 			folder = new File(parentPath);
-			if ("stl".equalsIgnoreCase(suffix) || "obj".equalsIgnoreCase(suffix)) {
+			if ("stl".equalsIgnoreCase(suffix) || "obj".equalsIgnoreCase(suffix) || "dae".equalsIgnoreCase(suffix)) {
 				modelFile = mainFile;
 			}
 			loadCode();
@@ -219,6 +220,7 @@ public class Build {
 		if (newName.toLowerCase().endsWith(".gcode")) newName = newName.substring(0, newName.length()-6);
 		if (newName.toLowerCase().endsWith(".stl")) newName = newName.substring(0, newName.length()-4);
 		if (newName.toLowerCase().endsWith(".obj")) newName = newName.substring(0, newName.length()-4);
+		if (newName.toLowerCase().endsWith(".dae")) newName = newName.substring(0, newName.length()-4);
 
 		
 		BuildCode code = getCode();
@@ -264,16 +266,6 @@ public class Build {
 		return null;
 	}
 	
-	/**
-	 * Cleanup temporary files used during a build/run.
-	 */
-	public void cleanup() {
-		// if the java runtime is holding onto any files in the build dir, we
-		// won't be able to delete them, so we need to force a gc here
-		System.gc();
-
-	}
-
 	protected int countLines(String what) {
 		char c[] = what.toCharArray();
 		int count = 0;

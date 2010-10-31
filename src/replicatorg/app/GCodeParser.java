@@ -38,8 +38,11 @@ import replicatorg.app.exceptions.JobEndException;
 import replicatorg.app.exceptions.JobException;
 import replicatorg.app.exceptions.JobRewindException;
 import replicatorg.drivers.Driver;
+import replicatorg.drivers.RetryException;
 import replicatorg.machine.model.Axis;
 import replicatorg.machine.model.ToolModel;
+import replicatorg.drivers.PenPlotter;
+
 
 public class GCodeParser {
 	// command to parse
@@ -47,6 +50,9 @@ public class GCodeParser {
 
 	// our driver we use.
 	protected Driver driver;
+	
+	// Pen Plotter Driver 
+	//protected PenPlotter penPlotter;
 
 	// our code data storage guys.
 	protected Hashtable<String, Double> codeValues;
@@ -85,6 +91,9 @@ public class GCodeParser {
 	boolean absoluteMode = false;
 
 	// our feedrate variables.
+	/**
+	 * Feedrate in mm/minute.
+	 */
 	double feedrate = 0.0;
 
 	/*
@@ -132,6 +141,11 @@ public class GCodeParser {
 	public static final int TB_MESSAGE = 998;
 	public static final int TB_CLEANUP = 999;
 	
+	// Replicate old behavior of breaking out Z moves into seperate setTarget
+	// calls.
+	
+	private boolean breakoutZMoves = Base.preferences.getBoolean("replicatorg.parser.breakzmoves", false);
+	
 	/**
 	 * Creates the driver object.
 	 */
@@ -177,7 +191,8 @@ public class GCodeParser {
 	public void init(Driver drv) {
 		// our driver class
 		driver = drv;
-
+		// reload breakout
+		breakoutZMoves = Base.preferences.getBoolean("replicatorg.parser.breakzmoves", false);
 		// init our offset variables
 		currentOffset = driver.getOffset(0);
 	}
@@ -316,8 +331,9 @@ public class GCodeParser {
 
 	/**
 	 * Actually execute the GCode we just parsed.
+	 * @throws RetryException 
 	 */
-	public void execute() throws GCodeException {
+	public void execute() throws GCodeException, RetryException {
 		// TODO: is this the proper way?
 		// Set spindle speed?
 		// if (hasCode("S"))
@@ -337,7 +353,7 @@ public class GCodeParser {
 		}
 	}
 
-	private void executeMCodes() throws GCodeException {
+	private void executeMCodes() throws GCodeException, RetryException {
 		// find us an m code.
 		if (hasCode("M")) {
 			switch ((int) getCodeValue("M")) {
@@ -434,11 +450,11 @@ public class GCodeParser {
 			// open collet
 			case 21:
 				driver.openCollet();
-
+				break;
 				// open collet
 			case 22:
 				driver.closeCollet();
-
+				break;
 				// M40-M46 = change gear ratios
 			case 40:
 				driver.changeGearRatio(0);
@@ -467,7 +483,7 @@ public class GCodeParser {
 			// read spindle speed
 			case 50:
 				driver.getSpindleRPM();
-
+				break;
 				// subroutine functions... will implement later
 				// case 97: jump
 				// case 98: jump to subroutine
@@ -520,6 +536,19 @@ public class GCodeParser {
 				else if (hasCode("R"))
 					driver.setMotorRPM(getCodeValue("R"));
 				break;
+
+			// PEN PLOTTER
+		
+			
+			// set servo position
+			case 300:
+				if (hasCode("S")) {
+					if (driver instanceof PenPlotter) {
+						((PenPlotter)driver).setServoPos(getCodeValue("S"));
+					}
+				}
+				break;
+
 
 			// set build platform temperature
 			case 109:
@@ -639,7 +668,7 @@ public class GCodeParser {
 		}
 	}
 
-	private void executeGCodes() throws GCodeException {
+	private void executeGCodes() throws GCodeException, RetryException {
 		// start us off at our current position...
 		Point3d temp = driver.getCurrentPosition();
 
@@ -686,6 +715,7 @@ public class GCodeParser {
 
 		// Get feedrate if supplied
 		if (hasCode("F")) {
+			// Read feedrate in mm/min.
 			feedrate = getCodeValue("F");
 			driver.setFeedrate(feedrate);
 		}
@@ -748,11 +778,11 @@ public class GCodeParser {
 				currentPlane = XY_PLANE;
 				break;
 			case 18:
-				Base.logger.warning("ZX Plane moves are not supported yet.");
+				//Base.logger.warning("ZX Plane moves are not supported yet.");
 				currentPlane = ZX_PLANE;
 				break;
 			case 19:
-				Base.logger.warning("ZY Plane moves are not supported yet.");
+				//Base.logger.warning("ZY Plane moves are not supported yet.");
 				currentPlane = ZY_PLANE;
 				break;
 
@@ -977,7 +1007,7 @@ public class GCodeParser {
 	 * drillTarget = new Point3d(); drillRetract = 0.0; drillFeedrate = 0.0;
 	 * drillDwell = 0.0; drillPecksize = 0.0;
 	 */
-	private void drillingCycle(boolean speedPeck) {
+	private void drillingCycle(boolean speedPeck) throws RetryException {
 		// Retract to R position if Z is currently below this
 		Point3d current = driver.getCurrentPosition();
 		if (current.z < drillRetract) {
@@ -1041,7 +1071,7 @@ public class GCodeParser {
 		}
 	}
 
-	private void drawArc(Point3d center, Point3d endpoint, boolean clockwise) {
+	private void drawArc(Point3d center, Point3d endpoint, boolean clockwise) throws RetryException {
 		// System.out.println("Arc from " + current.toString() + " to " +
 		// endpoint.toString() + " with center " + center);
 
@@ -1122,16 +1152,15 @@ public class GCodeParser {
 		// not supported!
 	}
 
-	private void setTarget(Point3d p) {
-		// TODO: wow.
-		// This is deeply broken, but I'll leave it be for now and fix with a
-		// flag later.
+	private void setTarget(Point3d p) throws RetryException {
 		// If you really want two seperate moves, do it when you generate your
 		// toolpath.
 		// move z first
-		Point3d current = driver.getCurrentPosition();		
-		if (p.z != current.z) {
-			driver.queuePoint(new Point3d(current.x, current.y, p.z));
+		Point3d current = driver.getCurrentPosition();
+		if (breakoutZMoves) {
+			if (p.z != current.z) {
+				driver.queuePoint(new Point3d(current.x, current.y, p.z));
+			}
 		}
 		driver.queuePoint(new Point3d(p));
 		current = new Point3d(p);

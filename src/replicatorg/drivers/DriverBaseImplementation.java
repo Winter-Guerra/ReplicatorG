@@ -109,6 +109,7 @@ public class DriverBaseImplementation implements Driver {
 
 	public void setInitialized(boolean status) {
 		isInitialized = status;
+		if (!status) { currentPosition = null; }
 	}
 
 	public boolean isInitialized() {
@@ -143,7 +144,7 @@ public class DriverBaseImplementation implements Driver {
 		return parser;
 	}
 
-	public void execute() throws GCodeException, InterruptedException {
+	public void execute() throws GCodeException, InterruptedException, RetryException {
 		assert (parser != null);
 		parser.execute();
 	}
@@ -206,7 +207,7 @@ public class DriverBaseImplementation implements Driver {
 
 	private Point3d currentPosition = null;
 	
-	public void setCurrentPosition(Point3d p) {
+	public void setCurrentPosition(Point3d p) throws RetryException {
 		currentPosition = p;
 	}
 
@@ -238,16 +239,16 @@ public class DriverBaseImplementation implements Driver {
 		return getCurrentPosition();
 	}
 
-	public void queuePoint(Point3d p) {
+	/**
+	 * Queue the given point.
+	 * @param p The point, in mm.
+	 * @throws RetryException 
+	 */
+	public void queuePoint(Point3d p) throws RetryException {
 		Point3d delta = getDelta(p);
 
-		// calculate the length of each axis move
-		double xFactor = Math.pow(delta.x, 2);
-		double yFactor = Math.pow(delta.y, 2);
-		double zFactor = Math.pow(delta.z, 2);
-
 		// add to the total length
-		moveLength += Math.sqrt(xFactor + yFactor + zFactor);
+		moveLength += delta.distance(new Point3d());
 
 		// what is our feedrate?
 		double feedrate = getSafeFeedrate(delta);
@@ -283,6 +284,11 @@ public class DriverBaseImplementation implements Driver {
 		return currentFeedrate;
 	}
 
+	/**
+	 * Return the maximum safe feedrate, given in mm/min., for the given delta and current feedrate.
+	 * @param delta The delta in mm.
+	 * @return
+	 */
 	public double getSafeFeedrate(Point3d delta) {
 		double feedrate = getCurrentFeedrate();
 
@@ -298,13 +304,18 @@ public class DriverBaseImplementation implements Driver {
 			// System.out.println("Zero feedrate!! " + feedrate);
 		}
 
+		// Break down feedrate by axis.
+		double length = delta.distance(new Point3d(0,0,0));
 		if (delta.x != 0)
-			feedrate = Math.min(feedrate, maxFeedrates.x);
+			if (feedrate*delta.x/length > maxFeedrates.x)
+				feedrate = maxFeedrates.x * length/delta.x;
 		if (delta.y != 0)
-			feedrate = Math.min(feedrate, maxFeedrates.y);
-		if (delta.z != 0)
-			feedrate = Math.min(feedrate, maxFeedrates.z);
-
+			if (feedrate*delta.y/length > maxFeedrates.y)
+				feedrate = maxFeedrates.y * length/delta.y;
+		if (delta.z != 0) {
+			if (feedrate*delta.z/length > maxFeedrates.z)
+				feedrate = maxFeedrates.z * length/delta.z;
+		}
 		return feedrate;
 	}
 
@@ -321,8 +332,9 @@ public class DriverBaseImplementation implements Driver {
 
 	/***************************************************************************
 	 * various homing functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void homeAxes(EnumSet<Axis> axes, boolean positive, double feedrate) {
+	public void homeAxes(EnumSet<Axis> axes, boolean positive, double feedrate) throws RetryException {
 	}
 
 	/***************************************************************************
@@ -351,19 +363,21 @@ public class DriverBaseImplementation implements Driver {
 
 	/***************************************************************************
 	 * Tool interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void requestToolChange(int toolIndex) {
+	public void requestToolChange(int toolIndex) throws RetryException {
 		machine.selectTool(toolIndex);
 	}
 
-	public void selectTool(int toolIndex) {
+	public void selectTool(int toolIndex) throws RetryException {
 		machine.selectTool(toolIndex);
 	}
 
 	/***************************************************************************
 	 * pause function
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void delay(long millis) {
+	public void delay(long millis) throws RetryException {
 		// System.out.println("Delay: " + millis);
 	}
 
@@ -380,12 +394,13 @@ public class DriverBaseImplementation implements Driver {
 
 	/***************************************************************************
 	 * enabling/disabling our drivers (steppers, servos, etc.)
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void enableDrives() {
+	public void enableDrives() throws RetryException {
 		machine.enableDrives();
 	}
 
-	public void disableDrives() {
+	public void disableDrives() throws RetryException {
 		machine.disableDrives();
 	}
 
@@ -408,19 +423,19 @@ public class DriverBaseImplementation implements Driver {
 		machine.currentTool().setMotorDirection(dir);
 	}
 
-	public void setMotorRPM(double rpm) {
+	public void setMotorRPM(double rpm) throws RetryException {
 		machine.currentTool().setMotorSpeedRPM(rpm);
 	}
 
-	public void setMotorSpeedPWM(int pwm) {
+	public void setMotorSpeedPWM(int pwm) throws RetryException {
 		machine.currentTool().setMotorSpeedPWM(pwm);
 	}
 
-	public void enableMotor() {
+	public void enableMotor() throws RetryException {
 		machine.currentTool().enableMotor();
 	}
 
-	public void disableMotor() {
+	public void disableMotor() throws RetryException {
 		machine.currentTool().disableMotor();
 	}
 
@@ -439,19 +454,19 @@ public class DriverBaseImplementation implements Driver {
 		machine.currentTool().setSpindleDirection(dir);
 	}
 
-	public void setSpindleRPM(double rpm) {
+	public void setSpindleRPM(double rpm) throws RetryException {
 		machine.currentTool().setSpindleSpeedRPM(rpm);
 	}
 
-	public void setSpindleSpeedPWM(int pwm) {
+	public void setSpindleSpeedPWM(int pwm) throws RetryException {
 		machine.currentTool().setSpindleSpeedPWM(pwm);
 	}
 
-	public void enableSpindle() {
+	public void enableSpindle() throws RetryException {
 		machine.currentTool().enableSpindle();
 	}
 
-	public void disableSpindle() {
+	public void disableSpindle() throws RetryException {
 		machine.currentTool().disableSpindle();
 	}
 
@@ -465,8 +480,9 @@ public class DriverBaseImplementation implements Driver {
 
 	/***************************************************************************
 	 * Temperature interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void setTemperature(double temperature) {
+	public void setTemperature(double temperature) throws RetryException {
 		machine.currentTool().setTargetTemperature(temperature);
 	}
 
@@ -482,8 +498,9 @@ public class DriverBaseImplementation implements Driver {
 
 	/***************************************************************************
 	 * Platform Temperature interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void setPlatformTemperature(double temperature) {
+	public void setPlatformTemperature(double temperature) throws RetryException {
 		machine.currentTool().setPlatformTargetTemperature(temperature);
 	}
 
@@ -521,23 +538,25 @@ public class DriverBaseImplementation implements Driver {
 
 	/***************************************************************************
 	 * Fan interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void enableFan() {
+	public void enableFan() throws RetryException {
 		machine.currentTool().enableFan();
 	}
 
-	public void disableFan() {
+	public void disableFan() throws RetryException {
 		machine.currentTool().disableFan();
 	}
 
 	/***************************************************************************
 	 * Valve interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void openValve() {
+	public void openValve() throws RetryException {
 		machine.currentTool().openValve();
 	}
 
-	public void closeValve() {
+	public void closeValve() throws RetryException {
 		machine.currentTool().closeValve();
 	}
 

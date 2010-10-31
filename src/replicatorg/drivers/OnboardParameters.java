@@ -62,9 +62,26 @@ public interface OnboardParameters {
 		public float d;
 	}
 	
-	PIDParameters getPIDParameters();
-	void setPIDParameters(PIDParameters params);
+	PIDParameters getPIDParameters(int which);
+	void setPIDParameters(int which, PIDParameters params);
 	
-	/** Reset the onboard parameters to the factory settings. */ 
+	class ExtraFeatures {
+		final static int CHA = 0;
+		final static int CHB = 1;
+		final static int CHC = 2;
+		public boolean swapMotorController;
+		public int heaterChannel;
+		public int hbpChannel;
+		public int abpChannel;
+	}
+	
+	ExtraFeatures getExtraFeatures();
+	void setExtraFeatures(ExtraFeatures features);
+	
+	/** Reset the onboard parameters on the motherboard to factory settings. */ 
 	void resetToFactory();
+
+	/** Reset the onboard parameters on the extruder controller to factory settings. */ 
+	void resetToolToFactory();
+
 }

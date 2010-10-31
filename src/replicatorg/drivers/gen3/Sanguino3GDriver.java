@@ -41,16 +41,21 @@ import org.w3c.dom.Node;
 import replicatorg.app.Base;
 import replicatorg.drivers.BadFirmwareVersionException;
 import replicatorg.drivers.OnboardParameters;
+import replicatorg.drivers.PenPlotter;
+import replicatorg.drivers.RetryException;
 import replicatorg.drivers.SDCardCapture;
 import replicatorg.drivers.SerialDriver;
 import replicatorg.drivers.Version;
+import replicatorg.drivers.gen3.PacketProcessor.CRCException;
 import replicatorg.machine.model.Axis;
 import replicatorg.machine.model.ToolModel;
 import replicatorg.uploader.FirmwareUploader;
 
 public class Sanguino3GDriver extends SerialDriver
-	implements OnboardParameters, SDCardCapture
+	implements OnboardParameters, SDCardCapture, PenPlotter
 {
+	protected final static int DEFAULT_RETRIES = 5;
+	
 	Version toolVersion = new Version(0,0);
 	
 	public Sanguino3GDriver() {
@@ -76,7 +81,7 @@ public class Sanguino3GDriver extends SerialDriver
 			// attempt to send version command and retrieve reply.
 			try {
 				// Default timeout should be 2.6s.  Timeout can be sped up for v2, but let's play it safe.
-				int timeout = 4000;
+				int timeout = 400;
 				connectToDevice(timeout);
 			} catch (Exception e) {
 				// todo: handle init exceptions here
@@ -130,7 +135,7 @@ public class Sanguino3GDriver extends SerialDriver
 			// Wait >2.6s -- 2s for the arduino reset; .6 seconds for the rest of the
 			// system to come up.
 			try {
-				Thread.sleep(3000);
+				Thread.sleep(2600);
 			} catch (InterruptedException ie) {
 				// Assume we're shutting down the app or aborting the
 				// attempt.  Reassert interrupted status and let
@@ -145,7 +150,7 @@ public class Sanguino3GDriver extends SerialDriver
 			// Wait >2.6s -- 2s for the arduino reset; .6 seconds for the rest of the
 			// system to come up.
 			try {
-				Thread.sleep(3000);
+				Thread.sleep(2600);
 			} catch (InterruptedException ie) {
 				// Assume we're shutting down the app or aborting the
 				// attempt.  Reassert interrupted status and let
@@ -161,14 +166,54 @@ public class Sanguino3GDriver extends SerialDriver
 	/**
 	 * Sends the command over the serial connection and retrieves a result.
 	 */
-	protected PacketResponse runCommand(byte[] packet) {
-		assert (serial != null);
-		
-		if (packet == null || packet.length < 4)
+	protected PacketResponse runCommand(byte[] packet) throws RetryException {
+		return runCommand(packet,DEFAULT_RETRIES);
+	}
+
+	protected PacketResponse runQuery(byte[] packet, int retries) {
+		try {
+			return runCommand(packet,retries);
+		} catch (RetryException re) {
+			throw new RuntimeException("Queries can not have valid retries!");
+		}
+	}
+
+	protected PacketResponse runQuery(byte[] packet) {
+		return runQuery(packet,1);
+	}
+	
+	void printDebugData(String title, byte[] data) {
+		if (Base.logger.isLoggable(Level.FINER)) {
+			StringBuffer buf = new StringBuffer(title + ": ");
+			for (int i = 0; i < data.length; i++) {
+				buf.append(Integer
+						.toHexString((int) data[i] & 0xff));
+				buf.append(" ");
+			}
+			Base.logger.log(Level.FINER,buf.toString());
+		}
+	}
+	/**
+	 * It's important here to understand the difference between "retries" and the retry exception.
+	 * A retry is called when packet transmission itself failed and we want to try again.
+	 * The retry exception is thrown when the packet was successfully processed, but the buffer
+	 * was full, indicating to the controller that another attempt is warranted. 
+	 * @param packet
+	 * @param retries
+	 * @return
+	 * @throws RetryException
+	 */
+	protected PacketResponse runCommand(byte[] packet, int retries) throws RetryException {
+		if (retries == 0) {
+			Base.logger.severe("Packet timed out!");
+			return PacketResponse.timeoutResponse();
+		}
+		if (packet == null || packet.length < 4) {
+			Base.logger.severe("Attempt to send empty or too-small packet");
 			return null; // skip empty commands or broken commands
+		}
 
 		boolean isCommand = (packet[2] & 0x80) != 0;
-		
 		if (fileCaptureOstream != null) {
 			// capture to file.
 			try {
@@ -182,87 +227,74 @@ public class Sanguino3GDriver extends SerialDriver
 			}
 			return PacketResponse.okResponse();  // Always pretend that it's all good.
 		}
+
+		// This can actually happen during shutdown.
+		if (serial == null) return PacketResponse.timeoutResponse();
 		
-		boolean packetSent = false;
-		PacketProcessor pp = new PacketProcessor();
+		PacketProcessor pp;
 		PacketResponse pr = new PacketResponse();
 
-		while (!packetSent) {
+		assert (serial != null);
+
+		synchronized(serial) {
+
 			// Dump out if interrupted
 			if (Thread.currentThread().isInterrupted()) {
+				// Clear interrupted status
+				Thread.interrupted();
+				// Wait for end of packet and clear (if forthcoming)
+				try {
+					Thread.sleep(10);
+					serial.clear();
+				} catch (InterruptedException e) {
+					// safe to ignore
+				}
+				// Reestablish interrupt
+				Thread.currentThread().interrupt();
 				return pr;
 			}
 
 			pp = new PacketProcessor();
 
-			synchronized (serial) {
-				serial.write(packet);
+			// Do not allow a stop or reset command to interrupt mid-packet!
+			serial.write(packet);
+			
+			printDebugData("OUT",packet);
 
-				if (Base.logger.isLoggable(Level.FINER)) {
-					StringBuffer buf = new StringBuffer("OUT: ");
-					for (int i = 0; i < packet.length; i++) {
-						buf.append(Integer
-								.toHexString((int) packet[i] & 0xff));
-						buf.append(" ");
-					}
-					Base.logger.log(Level.FINER,buf.toString());
-				}
-
-					boolean c = false;
-					while (!c) {
-						// Dump out if interrupted
-						if (Thread.currentThread().isInterrupted()) { 
-							return pr;
-						}
-						int b = serial.read();
-						if (b == -1) {
-							// Read timed out.
-							try {
-								Thread.sleep(60);
-							} catch (InterruptedException e) {
-								// If we've been explicitly interrupted, reassert
-								// interrupted status and terminate early.
-								Thread.currentThread().interrupt();
-								return pr;
-							}
-							if (isCommand) {
-								// Try again for commands
-								Base.logger.info("Read timed out; trying to resend command.");
-								continue;
-							} else {
-								Base.logger.info("Read timed out; giving up on query.");
-								//throw new TimeoutException(serial);
-								return pr;
-							}
-						}
-						c = pp.processByte((byte) b);
-					}
-
-					pr = pp.getResponse();
-
-					if (pr.isOK())
-						packetSent = true;
-					else if (pr.getResponseCode() == PacketResponse.ResponseCode.BUFFER_OVERFLOW) {
-						try {
-							Thread.sleep(25);
-						} catch (InterruptedException e) {
-							Thread.currentThread().interrupt();
-							// We've been interrupted; dump out early!
-							return pr;
-						}
-					}
-					// TODO: implement other error things.
-					else {
-						StringBuffer sb = new StringBuffer("Sending ");
-						for (int i = 0; i < packet.length; i++) {
-							sb.append(Integer.toHexString(packet[i]));
-							sb.append(" ");
-						}
-						Base.logger.fine(sb.toString());
-						pr.printDebug();
+			// Read entire response packet
+			boolean completed = false;
+			while (!completed) {
+				// Dump out if interrupted
+				int b = serial.read();
+				if (b == -1) {
+					if (Thread.currentThread().isInterrupted()) {
 						break;
 					}
+					if (retries > 1) {
+						Base.logger.severe("Read timed out; retries remaining: "+Integer.toString(retries));
+					}
+					return runCommand(packet,retries-1);
+				}
+				try {
+					completed = pp.processByte((byte) b);
+				} catch (CRCException e) {
+					Base.logger.severe("Bad CRC received; retries remaining: "+Integer.toString(retries));
+					return runCommand(packet,retries-1);
+				}
+			}
+			pr = pp.getResponse();
 
+			if (pr.isOK()) {
+				// okay!
+			} else if (pr.getResponseCode() == PacketResponse.ResponseCode.BUFFER_OVERFLOW) {
+				throw new RetryException();
+			}
+			else {
+				// Other random error
+				printDebugData("Unknown error sending, retry",packet);
+				if (retries > 1) {
+					return runCommand(packet,retries-1);
+				}
 			}
 		}
 		return pr;
@@ -271,8 +303,10 @@ public class Sanguino3GDriver extends SerialDriver
 	static boolean isNotifiedFinishedFeature = false;
 
 	public boolean isFinished() {
+		if (fileCaptureOstream != null) { return true; }  // always done instantly if writing to file
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.IS_FINISHED.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
+		if (!pr.isOK()) { return false; }
 		int v = pr.get8();
 		if (pr.getResponseCode() == PacketResponse.ResponseCode.UNSUPPORTED) {
 			if (!isNotifiedFinishedFeature) {
@@ -297,7 +331,7 @@ public class Sanguino3GDriver extends SerialDriver
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.VERSION.getCode());
 		pb.add16(Base.VERSION);
 
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket(),1);
 		if (pr.isEmpty()) return null;
 		int versionNum = pr.get16();
 
@@ -317,7 +351,7 @@ public class Sanguino3GDriver extends SerialDriver
 		slavepb.add8((byte) machine.currentTool().getIndex());
 		slavepb.add8(ToolCommandCode.VERSION.getCode());
 		int slaveVersionNum = 0;
-		PacketResponse slavepr = runCommand(slavepb.getPacket());
+		PacketResponse slavepr = runQuery(slavepb.getPacket(),1);
 		if (!slavepr.isEmpty()) {
 			slaveVersionNum = slavepr.get16();
 		}
@@ -345,14 +379,15 @@ public class Sanguino3GDriver extends SerialDriver
 
 	public void sendInit() {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.INIT.getCode());
-		runCommand(pb.getPacket());
+		runQuery(pb.getPacket());
 	}
 
 	/***************************************************************************
 	 * commands for interfacing with the driver directly
+	 * @throws RetryException 
 	 **************************************************************************/
 
-	public void queuePoint(Point3d p) {
+	public void queuePoint(Point3d p) throws RetryException {
 		Base.logger.log(Level.FINE,"Queued point " + p);
 
 		// is this point even step-worthy?
@@ -363,10 +398,13 @@ public class Sanguino3GDriver extends SerialDriver
 		if (masterSteps > 0.0) {
 			// where we going?
 			Point3d steps = machine.mmToSteps(p);
-
+			
+			Point3d delta = getDelta(p);
+			double feedrate = getSafeFeedrate(delta);
+			
 			// how fast are we doing it?
 			long micros = convertFeedrateToMicros(getCurrentPosition(),
-					p, getSafeFeedrate(deltaSteps));
+					p, feedrate);
 
 			//System.err.println("Steps :"+steps.toString()+" micros "+Long.toString(micros));
 
@@ -409,7 +447,7 @@ public class Sanguino3GDriver extends SerialDriver
 	 * //send this segment queueIncrementalPoint(pb, segmentSteps, ticks); } }
 	 */
 
-	private void queueAbsolutePoint(Point3d steps, long micros) {
+	private void queueAbsolutePoint(Point3d steps, long micros) throws RetryException {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.QUEUE_POINT_ABS.getCode());
 
 		if (Base.logger.isLoggable(Level.FINE)) {
@@ -426,9 +464,9 @@ public class Sanguino3GDriver extends SerialDriver
 		runCommand(pb.getPacket());
 	}
 
-	public void setCurrentPosition(Point3d p) {
+	public void setCurrentPosition(Point3d p) throws RetryException {
 //		System.err.println("   SCP: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
-		if (super.getCurrentPosition().equals(p)) return;
+//		if (super.getCurrentPosition().equals(p)) return;
 //		System.err.println("COMMIT: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.SET_POSITION.getCode());
 
@@ -445,7 +483,7 @@ public class Sanguino3GDriver extends SerialDriver
 		super.setCurrentPosition(p);
 	}
 
-	public void homeAxes(EnumSet<Axis> axes, boolean positive, double feedrate) {
+	public void homeAxes(EnumSet<Axis> axes, boolean positive, double feedrate) throws RetryException {
 		Base.logger.log(Level.FINE,"Homing axes "+axes.toString());
 		byte flags = 0x00;
 
@@ -603,9 +641,8 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		
 		
 	}
+	public void delay(long millis) throws RetryException {
 
-
-	public void delay(long millis) {
 		if (Base.logger.isLoggable(Level.FINER)) {
 			Base.logger.log(Level.FINER,"Delaying " + millis + " millis.");
 		}
@@ -626,7 +663,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.closeClamp(clampIndex);
 	}
 
-	public void enableDrives() {
+	public void enableDrives() throws RetryException {
 		// Command RMB to enable its steppers. Note that they are
 		// already automagically enabled by most commands and need
 		// not be explicitly enabled.
@@ -636,7 +673,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.enableDrives();
 	}
 
-	public void disableDrives() {
+	public void disableDrives() throws RetryException {
 		// Command RMB to disable its steppers.
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.ENABLE_AXES.getCode());
 		pb.add8(0x07); // disable x,y,z
@@ -649,7 +686,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.changeGearRatio(ratioIndex);
 	}
 
-	public void requestToolChange(int toolIndex) {
+	public void requestToolChange(int toolIndex) throws RetryException {
 		selectTool(toolIndex);
 
 		Base.logger.log(Level.FINE,"Waiting for tool #" + toolIndex);
@@ -662,7 +699,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		runCommand(pb.getPacket());
 	}
 
-	public void selectTool(int toolIndex) {
+	public void selectTool(int toolIndex) throws RetryException {
 		Base.logger.log(Level.FINE,"Selecting tool #" + toolIndex);
 
 		// send it!
@@ -676,7 +713,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 	/***************************************************************************
 	 * Motor interface functions
 	 **************************************************************************/
-	public void setMotorRPM(double rpm) {
+	public void setMotorRPM(double rpm) throws RetryException {
 		// convert RPM into microseconds and then send.
 		long microseconds = (int) Math.round(60.0 * 1000000.0 / rpm); // no
 		// unsigned
@@ -697,7 +734,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.setMotorRPM(rpm);
 	}
 
-	public void setMotorSpeedPWM(int pwm) {
+	public void setMotorSpeedPWM(int pwm) throws RetryException {
 		Base.logger.log(Level.FINE,"Setting motor 1 speed to " + pwm + " PWM");
 
 		// send it!
@@ -711,7 +748,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.setMotorSpeedPWM(pwm);
 	}
 
-	public void enableMotor() {
+	public void enableMotor() throws RetryException {
 		// our flag variable starts with motors enabled.
 		byte flags = 1;
 
@@ -733,7 +770,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.enableMotor();
 	}
 
-	public void disableMotor() {
+	public void disableMotor() throws RetryException {
 		// bit 1 determines direction...
 		byte flags = 0;
 		if (machine.currentTool().getSpindleDirection() == ToolModel.MOTOR_CLOCKWISE)
@@ -755,7 +792,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_MOTOR_1_PWM.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 
 		// get it
 		int pwm = pr.get8();
@@ -772,7 +809,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_MOTOR_1_RPM.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 
 		// convert back to RPM
 		long micros = pr.get32();
@@ -787,9 +824,34 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 	}
 
 	/***************************************************************************
+	 * PenPlotter interface functions
+	 * @throws RetryException 
+	 **************************************************************************/
+	//public void moveServo(int degree) {}
+
+	//public void enableServo() {}
+
+	//public void disableServo() {}
+
+	public void setServoPos(double degree) throws RetryException {
+		
+		Base.logger.log(Level.FINE,"Setting servo 1 position to " + degree + " degrees");
+
+		// send it!
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_COMMAND.getCode());
+		pb.add8((byte) machine.currentTool().getIndex());
+		pb.add8(ToolCommandCode.SET_SERVO_1_POS.getCode());
+		pb.add8((byte) 1); // length of payload.
+		pb.add8((byte) degree);
+		runCommand(pb.getPacket());
+
+		//super.setServoPos(degree);		
+	}
+
+	/***************************************************************************
 	 * Spindle interface functions
 	 **************************************************************************/
-	public void setSpindleRPM(double rpm) {
+	public void setSpindleRPM(double rpm) throws RetryException {
 		// convert RPM into microseconds and then send.
 		long microseconds = (int) Math.round(60 * 1000000 / rpm); // no
 		// unsigned
@@ -810,7 +872,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.setSpindleRPM(rpm);
 	}
 
-	public void setSpindleSpeedPWM(int pwm) {
+	public void setSpindleSpeedPWM(int pwm) throws RetryException {
 		Base.logger.log(Level.FINE,"Setting motor 2 speed to " + pwm + " PWM");
 
 		// send it!
@@ -824,7 +886,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.setMotorSpeedPWM(pwm);
 	}
 
-	public void enableSpindle() {
+	public void enableSpindle() throws RetryException {
 		// our flag variable starts with spindles enabled.
 		byte flags = 1;
 
@@ -846,7 +908,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.enableSpindle();
 	}
 
-	public void disableSpindle() {
+	public void disableSpindle() throws RetryException {
 		// bit 1 determines direction...
 		byte flags = 0;
 		if (machine.currentTool().getSpindleDirection() == ToolModel.MOTOR_CLOCKWISE)
@@ -864,7 +926,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.disableSpindle();
 	}
 
-	public double getSpindleSpeedRPM() {
+	public double getSpindleSpeedRPM() throws RetryException {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_MOTOR_2_RPM.getCode());
@@ -887,7 +949,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_MOTOR_2_PWM.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 
 		// get it
 		int pwm = pr.get8();
@@ -902,8 +964,9 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 
 	/***************************************************************************
 	 * Temperature interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void setTemperature(double temperature) {
+	public void setTemperature(double temperature) throws RetryException {
 		// constrain our temperature.
 		int temp = (int) Math.round(temperature);
 		temp = Math.min(temp, 65535);
@@ -924,7 +987,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_TEMP.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		if (pr.isEmpty()) return;
 		int temp = pr.get16();
 		machine.currentTool().setCurrentTemperature(temp);
@@ -937,8 +1000,9 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 
 	/***************************************************************************
 	 * Platform Temperature interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void setPlatformTemperature(double temperature) {
+	public void setPlatformTemperature(double temperature) throws RetryException {
 		// constrain our temperature.
 		int temp = (int) Math.round(temperature);
 		temp = Math.min(temp, 65535);
@@ -959,7 +1023,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_PLATFORM_TEMP.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		if (pr.isEmpty()) return;
 		int temp = pr.get16();
 		machine.currentTool().setPlatformCurrentTemperature(temp);
@@ -1002,8 +1066,9 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 
 	/***************************************************************************
 	 * Fan interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void enableFan() {
+	public void enableFan() throws RetryException {
 		Base.logger.log(Level.FINE,"Enabling fan");
 
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_COMMAND.getCode());
@@ -1016,7 +1081,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.enableFan();
 	}
 
-	public void disableFan() {
+	public void disableFan() throws RetryException {
 		Base.logger.log(Level.FINE,"Disabling fan");
 
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_COMMAND.getCode());
@@ -1031,8 +1096,9 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 
 	/***************************************************************************
 	 * Valve interface functions
+	 * @throws RetryException 
 	 **************************************************************************/
-	public void openValve() {
+	public void openValve() throws RetryException {
 		Base.logger.log(Level.FINE,"Opening valve");
 
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_COMMAND.getCode());
@@ -1045,7 +1111,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		super.openValve();
 	}
 
-	public void closeValve() {
+	public void closeValve() throws RetryException {
 		Base.logger.log(Level.FINE,"Closing valve");
 
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_COMMAND.getCode());
@@ -1079,16 +1145,15 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 	public void pause() {
 		Base.logger.log(Level.FINE,"Sending asynch pause command");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.PAUSE.getCode());
-		runCommand(pb.getPacket());
+		runQuery(pb.getPacket());
 	}
 
 	public void unpause() {
 		Base.logger.log(Level.FINE,"Sending asynch unpause command");
 		// There is no explicit unpause command on the Sanguino3G; instead we
-		// use
-		// the pause command to toggle the pause state.
+		// use the pause command to toggle the pause state.
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.PAUSE.getCode());
-		runCommand(pb.getPacket());
+		runQuery(pb.getPacket());
 	}
 
 	/***************************************************************************
@@ -1124,17 +1189,22 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		return machine.mmToSteps(getAbsDeltaDistance(current, target));
 	}
 
+	/**
+	 * 
+	 * @param current
+	 * @param target
+	 * @param feedrate Feedrate in mm per minute
+	 * @return
+	 */
 	private long convertFeedrateToMicros(Point3d current, Point3d target,
 			double feedrate) {
 		Point3d deltaDistance = getAbsDeltaDistance(current, target);
-		Point3d deltaSteps = getAbsDeltaSteps(current, target);
-		// how long is our line length?
-		double distance = Math.sqrt(deltaDistance.x * deltaDistance.x
-				+ deltaDistance.y * deltaDistance.y + deltaDistance.z
-				* deltaDistance.z);
+ 		Point3d deltaSteps = machine.mmToSteps(deltaDistance);
 		double masterSteps = getLongestLength(deltaSteps);
-		// distance is in steps
-		// feedrate is in steps/
+		// how long is our line length?
+		double distance = deltaDistance.distance(new Point3d());
+		// distance is in mm
+		// feedrate is in mm/min
 		// distance / feedrate * 60,000,000 = move duration in microseconds
 		double micros = distance / feedrate * 60000000.0;
 		// micros / masterSteps = time between steps for master axis.
@@ -1168,14 +1238,17 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		Base.logger.warning("Stop.");
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.ABORT.getCode());
 		Thread.interrupted(); // Clear interrupted status
-		runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		// invalidate position, force reconciliation.
 		invalidatePosition();
 	}
 
 	protected Point3d reconcilePosition() {
+		if (fileCaptureOstream != null) {
+			return new Point3d(0,0,0);
+		}
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.GET_POSITION.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		Point3d steps = new Point3d(pr.get32(), pr.get32(), pr.get32());
 		// Useful quickie debugs
 //		System.err.println("Reconciling : "+machine.stepsToMM(steps).toString());
@@ -1187,7 +1260,10 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		if (isInitialized() && version.compareTo(new Version(1,4)) >= 0) {
 			// WDT reset introduced in version 1.4 firmware
 			PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.RESET.getCode());
-			runCommand(pb.getPacket());
+			Thread.interrupted(); // Clear interrupted status
+			PacketResponse pr = runQuery(pb.getPacket());
+			// invalidate position, force reconciliation.
+			invalidatePosition();
 		}
 		setInitialized(false);
 		initialize();
@@ -1229,7 +1305,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		for (byte b : data) {
 			pb.add8(b);
 		}
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		assert pr.get8() == data.length; 
 	}
 	
@@ -1247,13 +1323,17 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		pb.add8(ToolCommandCode.READ_FROM_EEPROM.getCode());
 		pb.add16(offset);
 		pb.add8(len);
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		if (pr.isOK()) {
 			int rvlen = Math.min(pr.getPayload().length - 1,len);
 			byte[] rv = new byte[rvlen];
 			// Copy removes the first response byte from the packet payload.
 			System.arraycopy(pr.getPayload(),1,rv,0,rvlen);
 			return rv;
+		}
+		else
+		{
+			Base.logger.severe("On tool read: "+pr.getResponseCode().getMessage());
 		}
 		return null;
 	}
@@ -1277,7 +1357,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		for (byte b : data) {
 			slavepb.add8(b);
 		}
-		PacketResponse slavepr = runCommand(slavepb.getPacket());
+		PacketResponse slavepr = runQuery(slavepb.getPacket());
 		assert slavepr.get8() == data.length; 
 	}
 
@@ -1285,7 +1365,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.READ_EEPROM.getCode());
 		pb.add16(offset);
 		pb.add8(len);
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		if (pr.isOK()) {
 			int rvlen = Math.min(pr.getPayload().length - 1,len);
 			byte[] rv = new byte[rvlen];
@@ -1311,6 +1391,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 	final private static int EEPROM_AUTOHOME_STEPS_PER_AXIS = 259;
 	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 271;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
+	final private static int EEPROM_EXTRA_FEATURES = 0x0018;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
 	final static class ECThermistorOffsets {
 		final private static int[] TABLE_OFFSETS = {
@@ -1508,13 +1589,13 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 			pb.add8(b);
 		}
 		pb.add8(0); // null-terminate string
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		return convertSDCode(pr.get8());
 	}
 
 	public int endCapture() {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.END_CAPTURE.getCode());
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		return pr.get32();
 	}
 
@@ -1524,7 +1605,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 			pb.add8(b);
 		}
 		pb.add8(0); // null-terminate string
-		PacketResponse pr = runCommand(pb.getPacket());
+		PacketResponse pr = runQuery(pb.getPacket());
 		return convertSDCode(pr.get8());
 	}
 
@@ -1540,7 +1621,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 			PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.NEXT_FILENAME.getCode());
 			pb.add8(reset?1:0);
 			reset = false;
-			PacketResponse pr = runCommand(pb.getPacket());
+			PacketResponse pr = runQuery(pb.getPacket());
 			ResponseCode rc = convertSDCode(pr.get8());
 			if (rc != ResponseCode.SUCCESS) {
 				return fileList;
@@ -1596,9 +1677,11 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 	};
 	
 	final static class PIDOffsets {
-		final static int P_TERM = 0x000C;
-		final static int I_TERM = 0x000E;
-		final static int D_TERM = 0x0010;
+		final static int PID_EXTRUDER  = 0x000C;
+		final static int PID_HBP       = 0x0012;
+		final static int P_TERM_OFFSET = 0x0000;
+		final static int I_TERM_OFFSET = 0x0002;
+		final static int D_TERM_OFFSET = 0x0004;
 	};
 
 	private int read16FromToolEEPROM(int offset, int defaultValue) {
@@ -1633,18 +1716,20 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		writeToToolEEPROM(ECBackoffOffsets.TRIGGER_MS,intToLE(bp.triggerMs,2));
 	}
 
-	public PIDParameters getPIDParameters() {
+	public PIDParameters getPIDParameters(int which) {
 		PIDParameters pp = new PIDParameters();
-		pp.p = readFloat16FromToolEEPROM(PIDOffsets.P_TERM, 5.0f);
-		pp.i = readFloat16FromToolEEPROM(PIDOffsets.I_TERM, 0.1f);
-		pp.d = readFloat16FromToolEEPROM(PIDOffsets.D_TERM, 5.0f);
+		int offset = (which == 0)?PIDOffsets.PID_EXTRUDER:PIDOffsets.PID_HBP;
+		pp.p = readFloat16FromToolEEPROM(offset+PIDOffsets.P_TERM_OFFSET, 7.0f);
+		pp.i = readFloat16FromToolEEPROM(offset+PIDOffsets.I_TERM_OFFSET, 0.325f);
+		pp.d = readFloat16FromToolEEPROM(offset+PIDOffsets.D_TERM_OFFSET, 36.0f);
 		return pp;
 	}
 	
-	public void setPIDParameters(PIDParameters pp) {
-		writeToToolEEPROM(PIDOffsets.P_TERM,floatToLE(pp.p));
-		writeToToolEEPROM(PIDOffsets.I_TERM,floatToLE(pp.i));
-		writeToToolEEPROM(PIDOffsets.D_TERM,floatToLE(pp.d));
+	public void setPIDParameters(int which, PIDParameters pp) {
+		int offset = (which == 0)?PIDOffsets.PID_EXTRUDER:PIDOffsets.PID_HBP;
+		writeToToolEEPROM(offset+PIDOffsets.P_TERM_OFFSET,floatToLE(pp.p));
+		writeToToolEEPROM(offset+PIDOffsets.I_TERM_OFFSET,floatToLE(pp.i));
+		writeToToolEEPROM(offset+PIDOffsets.D_TERM_OFFSET,floatToLE(pp.d));
 	}
 
 	/** Reset to the factory state.  This ordinarily means writing 0xff over the
@@ -1655,6 +1740,14 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		Arrays.fill(eepromWipe,(byte)0xff);
 		for (int i = 0; i < 0x0200; i+=16) {
 			writeToEEPROM(i,eepromWipe);
+		}
+	}
+
+	public void resetToolToFactory() {
+		byte eepromWipe[] = new byte[16];
+		Arrays.fill(eepromWipe,(byte)0xff);
+		for (int i = 0; i < 0x0200; i+=16) {
+			writeToToolEEPROM(i,eepromWipe);
 		}
 	}
 
@@ -1670,13 +1763,38 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 		writeToEEPROM(EEPROM_ENDSTOP_INVERSION_OFFSET,b);
 	}
 
+	public ExtraFeatures getExtraFeatures() {
+		int efdat = read16FromToolEEPROM(EEPROM_EXTRA_FEATURES,0x4084);
+		ExtraFeatures ef = new ExtraFeatures();
+		ef.swapMotorController = (efdat & 0x0001) != 0;
+		ef.heaterChannel = (efdat >> 2) & 0x0003;
+		ef.hbpChannel = (efdat >> 4) & 0x0003;
+		ef.abpChannel = (efdat >> 6) & 0x0003;
+//		System.err.println("Extra features: smc "+Boolean.toString(ef.swapMotorController));
+//		System.err.println("Extra features: ch ext "+Integer.toString(ef.heaterChannel));
+//		System.err.println("Extra features: ch hbp "+Integer.toString(ef.hbpChannel));
+//		System.err.println("Extra features: ch abp "+Integer.toString(ef.abpChannel));
+		return ef;
+	}
+	
+	public void setExtraFeatures(ExtraFeatures features) {
+		int efdat = 0x4000;
+		if (features.swapMotorController) { efdat = efdat | 0x0001; }
+		efdat |= features.heaterChannel << 2;
+		efdat |= features.hbpChannel << 4;
+		efdat |= features.abpChannel << 6;
+		//System.err.println("Writing to EF: "+Integer.toHexString(efdat));
+		writeToToolEEPROM(EEPROM_EXTRA_FEATURES,intToLE(efdat,2));
+	}
+
+	
 	public double getPlatformTemperatureSetting() {
 		// This call was introduced in version 2.3
 		if (toolVersion.atLeast(new Version(2,3))) {
 			PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 			pb.add8((byte) machine.currentTool().getIndex());
 			pb.add8(ToolCommandCode.GET_PLATFORM_SP.getCode());
-			PacketResponse pr = runCommand(pb.getPacket());
+			PacketResponse pr = runQuery(pb.getPacket());
 			int sp = pr.get16();
 			machine.currentTool().setPlatformTargetTemperature(sp);
 		}		
@@ -1689,11 +1807,12 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate) { //Auto homing scri
 			PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 			pb.add8((byte) machine.currentTool().getIndex());
 			pb.add8(ToolCommandCode.GET_SP.getCode());
-			PacketResponse pr = runCommand(pb.getPacket());
+			PacketResponse pr = runQuery(pb.getPacket());
 			int sp = pr.get16();
 			machine.currentTool().setTargetTemperature(sp);
 		}
 		return super.getTemperatureSetting();
 	}
 
+	public Version getToolVersion() { return toolVersion; }
 }
