@@ -176,11 +176,11 @@ public interface Driver {
 	/**
 	*First homing script. (Script that calibrates the makerbot homing sequence.)
 	*/
-	public void firstHoming(byte direction[], double feedrate);
+	public void firstHoming(byte direction[], double XYfeedrate, double Zfeedrate);
 	
 	//regular everyday use of the auto home script
 
-	public void autoHoming(EnumSet<Axis> axes, double feedrate);
+	public void autoHoming(EnumSet<Axis> axes, double XYfeedrate, double Zfeedrate);
 	
 
 	/**

@@ -489,7 +489,7 @@ public class Sanguino3GDriver extends SerialDriver
 		//Base.logger.info(String.valueOf(micros)); //spit out micros (For debugging purposes.)
 }
 
-	public void firstHoming(byte direction[], double feedrate) { //Auto homing first calibration script. Made by Intern Winter
+	public void firstHoming(byte direction[], double XYfeedrate, double Zfeedrate) { //Auto homing first calibration script. Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running first homing script.");
 		}
@@ -498,7 +498,7 @@ public class Sanguino3GDriver extends SerialDriver
 		---order of packets to send---
 		command_buffer.pop(); // remove the command
 		pop8 direction packets (one for each axis)
-		uint32_t feedrate = pop32(); // feedrate in us per step (one for each axis)
+		uint32_t feedrate = pop32(); // feedrate in us per step (one for XY and Z)
 		uint16_t timeout_s = pop16(); //The time to home for before giving up.
 		*/
 		
@@ -512,29 +512,33 @@ public class Sanguino3GDriver extends SerialDriver
 
 		Point3d maxFeedrates = machine.getMaximumFeedrates();
 
-		if (feedrate <= 0) {
+		if (XYfeedrate <= 0) { //if feedrate for the XY is not entered, use the fastest
 			// figure out our fastest feedrate.
-			feedrate = Math.max(maxFeedrates.x, maxFeedrates.y);
-			feedrate = Math.max(maxFeedrates.z, feedrate);
+			XYfeedrate = Math.max(maxFeedrates.x, maxFeedrates.y);
+		} 
+		if (Zfeedrate <= 0){ //if the feedrate for the Z stage is not entered, use the fastest
+			Zfeedrate = maxFeedrates.z;
 		}
 		
-		Point3d target = new Point3d();
+		Point3d XYtarget = new Point3d();
+		Point3d Ztarget = new Point3d();
 		
 		if (direction[0] != 0) {
-			feedrate = Math.min(feedrate, maxFeedrates.x);
-			target.x = 1; // just to give us feedrate info.
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.x);
+			XYtarget.x = 1; // just to give us feedrate info.
 		}
 		if (direction[1] != 0) {
-			feedrate = Math.min(feedrate, maxFeedrates.y);
-			target.y = 1; // just to give us feedrate info.
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.y);
+			XYtarget.y = 1; // just to give us feedrate info.
 		}
 		if (direction[2] != 0) {
-			feedrate = Math.min(feedrate, maxFeedrates.z);
-			target.z = 1; // just to give us feedrate info.
+			Zfeedrate = Math.min(Zfeedrate, maxFeedrates.z);
+			Ztarget.z = 1; // just to give us feedrate info.
 		}
 		
 		// calculate ticks
-		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
+		long XYmicros = convertFeedrateToMicros(new Point3d(), XYtarget, XYfeedrate);
+		long Zmicros = convertFeedrateToMicros(new Point3d(), Ztarget, Zfeedrate);
 		// send it!
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_RAFT.getCode());
 		
@@ -542,15 +546,15 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add8(direction[i]); //send the directions!
 		}
 		
-		pb.add32((int) micros); //feedrate for XY (they move together and have the same feedrate)
-		//Feedrate for Z stage
+		pb.add32((int) XYmicros); //feedrate for XY (they move together and have the same feedrate)
+		pb.add32((int) Zmicros);//Feedrate for Z stage
 		pb.add16(60); // default homing timeout is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket()); //send the command.		
 		
 	}
 		
 
-public void autoHoming(EnumSet<Axis> axes, double feedrate, double feedrateZ) { //Auto homing script. //Made by Intern Winter
+public void autoHoming(EnumSet<Axis> axes, double XYfeedrate, double Zfeedrate) { //Auto homing script. //Made by Intern Winter
 		if (Base.logger.isLoggable(Level.FINER)) { //log the action
 			Base.logger.log(Level.FINER,"Running homing script.");
 		}
@@ -558,7 +562,7 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate, double feedrateZ) { 
 		/*
 		---order of packets to send---
 		command_buffer.pop(); // remove the command
-		uint32_t feedrate = pop32(); // feedrate in us per step (one per axis)
+		uint32_t feedrate = pop32(); // feedrate in us per step (one for XY and one for Z)
 		uint16_t timeout_s = pop16(); //The time to home for before giving up.
 		*/
 
@@ -572,41 +576,39 @@ public void autoHoming(EnumSet<Axis> axes, double feedrate, double feedrateZ) { 
 		super.setCurrentPosition(p);
 
 		Point3d maxFeedrates = machine.getMaximumFeedrates();
-		//double feedrateZ = 0;
-		
-		if (feedrate <= 0) { //if the XY feedrate is not defined, assume we want the fastest.
+
+		if (XYfeedrate <= 0) { //if feedrate for the XY is not entered, use the fastest
 			// figure out our fastest feedrate.
-			feedrate = Math.max(maxFeedrates.x, maxFeedrates.y);
-		}
-		if (feedrateZ <= 0){ //if the Z feedrate is not defined assum we want the fastest.
-			feedrateZ = maxFeedrates.z; //the Z stage and XY stages are always move separately so we can calculate them separately also.
+			XYfeedrate = Math.max(maxFeedrates.x, maxFeedrates.y);
+		} 
+		if (Zfeedrate <= 0){ //if the feedrate for the Z stage is not entered, use the fastest
+			Zfeedrate = maxFeedrates.z;
 		}
 		
-		
-		Point3d target = new Point3d();
-		Point3d targetZ = new Point3d();
+		Point3d XYtarget = new Point3d();
+		Point3d Ztarget = new Point3d();
 		
 		if (axes.contains(Axis.X)) {
-			feedrate = Math.min(feedrate, maxFeedrates.x);
-			target.x = 1; // just to give us feedrate info.
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.x);
+			XYtarget.x = 1; // just to give us feedrate info.
 		}
 		if (axes.contains(Axis.Y)) {
-			feedrate = Math.min(feedrate, maxFeedrates.y);
-			target.y = 1; // just to give us feedrate info.
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.y);
+			XYtarget.y = 1; // just to give us feedrate info.
 		}
 		if (axes.contains(Axis.Z)) {
-			targetZ.z = 1; // just to give us feedrate info.
+			Zfeedrate = Math.min(Zfeedrate, maxFeedrates.z);
+			Ztarget.z = 1; // just to give us feedrate info.
 		}
 		
 		// calculate ticks
-		long micros = convertFeedrateToMicros(new Point3d(), target, feedrate);
-		long microsZ = convertFeedrateToMicros(new Point3d(), targetZ, feedrateZ);
-		//don't need a third because the Z is all alone, it doesn't have to worry about other separate feedrates.
-		
+		long XYmicros = convertFeedrateToMicros(new Point3d(), XYtarget, XYfeedrate);
+		long Zmicros = convertFeedrateToMicros(new Point3d(), Ztarget, Zfeedrate);
+
 		// send it!
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
-		pb.add32((int) micros); //feedrate for XY stage
-		pb.add32((int) microsZ); //feedrate for the Z stage
+		pb.add32((int) XYmicros); //feedrate for XY stage
+		pb.add32((int) Zmicros); //feedrate for the Z stage
 		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
 		runCommand(pb.getPacket());
 		
