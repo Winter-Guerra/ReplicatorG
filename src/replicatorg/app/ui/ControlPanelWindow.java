@@ -159,8 +159,9 @@ public class ControlPanelWindow extends JFrame implements
 		firstautoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent f) {
 			byte direction[] = {x, y, z};
+
 			try {
-				driver.firstHoming(direction,0);
+				driver.firstHoming(direction,0,0);
 				} catch (RetryException e1) {
 				Base.logger.severe("Can't setup homing; machine busy");
 				}
@@ -173,8 +174,9 @@ private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subr
 		JMenuItem autoitem = new JMenuItem(name);
 		autoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent g) {
+
 			try {
-				driver.autoHoming(set,0);
+				driver.autoHoming(set,0,0);
 				} catch (RetryException e1) {
 				Base.logger.severe("Can't home; machine busy");
 				}
@@ -192,8 +194,6 @@ public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
 					home.setVisible(true);
 					home.toFront();
 				}
-				//HomingSetupWindow eop = HomingSetupWindow.HomingSetupWindow(machine);
-				//eop.setVisible(true);
 		}
 	});
 		return firstTimeHomeWindow;

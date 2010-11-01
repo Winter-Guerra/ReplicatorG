@@ -90,7 +90,7 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
 		
 		try {
-		driver.firstHoming(direction,0); //fire off the command to the makerbot to start the homing
+		driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
 		} catch (RetryException e1) {
 		Base.logger.severe("Can't setup homing; machine busy");
 		}
