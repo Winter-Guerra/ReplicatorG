@@ -588,7 +588,7 @@ public class Sanguino3GDriver extends SerialDriver
 		
 		pb.add32((int) XYmicros); //feedrate for XY (they move together and have the same feedrate)
 		pb.add32((int) Zmicros);//Feedrate for Z stage
-		pb.add16(60); // default homing timeout is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
+		pb.add16(150); // default homing timeout is 150 seconds. (usually only takes about 90 seconds).
 		runCommand(pb.getPacket()); //send the command.		
 		
 	}
@@ -651,7 +651,7 @@ public void autoHoming(EnumSet<Axis> axes, double XYfeedrate, double Zfeedrate) 
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_RAFT.getCode());
 		pb.add32((int) XYmicros); //feedrate for XY stage
 		pb.add32((int) Zmicros); //feedrate for the Z stage
-		pb.add16(60); // default is 20 seconds. I made it 60 because I wanted to make sure that it would reach the bottom.
+		pb.add16(150); // default is 150 seconds. (usually only takes about 90)
 		runCommand(pb.getPacket());
 		
 		
