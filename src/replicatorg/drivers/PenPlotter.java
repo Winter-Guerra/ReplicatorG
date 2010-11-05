@@ -12,4 +12,6 @@ public interface PenPlotter {
 
 	public void setServoPos(double degree) throws RetryException;
 	
+	public void setServo2Pos(double degree) throws RetryException;
+	
 }

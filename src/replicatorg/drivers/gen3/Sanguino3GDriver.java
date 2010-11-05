@@ -863,6 +863,24 @@ public void autoHoming(EnumSet<Axis> axes, double XYfeedrate, double Zfeedrate) 
 		//super.setServoPos(degree);		
 	}
 
+public void setServo2Pos(double degree) throws RetryException {
+		
+		Base.logger.log(Level.FINE,"Setting servo 2 position to " + degree + " degrees");
+
+		// send it!
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_COMMAND.getCode());
+		pb.add8((byte) machine.currentTool().getIndex());
+		pb.add8(ToolCommandCode.SET_SERVO_2_POS.getCode());
+		pb.add8((byte) 1); // length of payload.
+		pb.add8((byte) degree);
+		runCommand(pb.getPacket());
+
+		//super.setServoPos(degree);		
+	}
+
+	
+	
+	
 	/***************************************************************************
 	 * Spindle interface functions
 	 **************************************************************************/

@@ -202,26 +202,34 @@ public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
 
 	protected JMenuBar createMenuBar() {
 		JMenuBar bar = new JMenuBar();
-		JMenu homeMenu = new JMenu("Homing");
-		bar.add(homeMenu);
-		homeMenu.add(makeHomeItem("Home X+",EnumSet.of(Axis.X),true));
-		homeMenu.add(makeHomeItem("Home X-",EnumSet.of(Axis.X),false));
-		homeMenu.add(makeHomeItem("Home Y+",EnumSet.of(Axis.Y),true));
-		homeMenu.add(makeHomeItem("Home Y-",EnumSet.of(Axis.Y),false));
-		homeMenu.add(makeHomeItem("Home Z+",EnumSet.of(Axis.Z),true));
-		homeMenu.add(makeHomeItem("Home Z-",EnumSet.of(Axis.Z),false));
-		homeMenu.add(new JSeparator());
-		homeMenu.add(makeHomeItem("Home XY+",EnumSet.of(Axis.X,Axis.Y),true));
-		homeMenu.add(makeHomeItem("Home XY-",EnumSet.of(Axis.X,Axis.Y),false));
-		homeMenu.add(makeHomeItem("Home all+",EnumSet.allOf(Axis.class),true));
-		homeMenu.add(makeHomeItem("Home all-",EnumSet.allOf(Axis.class),false));
-		homeMenu.add(makeHomeItem("Home XZ-",EnumSet.of(Axis.X,Axis.Z),false));
-		homeMenu.add(makeHomeItem("Home YZ-",EnumSet.of(Axis.Y,Axis.Z),false));
-		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",(byte)2,(byte)2,(byte)2)); //auto home downwards and save the distance
-		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
-		homeMenu.add(makeFirstTimeAutoHomeItem("First Auto Home +-+",(byte)2,(byte)1,(byte)2)); //auto home downwards and save the distance
-		homeMenu.add(makeAutoHomeItem("Auto Home All",EnumSet.allOf(Axis.class))); //auto home downwards from the saved distance
-		homeMenu.add(makeFirstTimeAutohomeWindowItem("First Time Home Window"));
+		
+		JMenu autoHomingMenu = new JMenu("Automatic Homing");
+		bar.add(autoHomingMenu);
+		autoHomingMenu.add(makeFirstTimeAutohomeWindowItem("Setup Automatic Homing")); //open up the setup window
+		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",(byte)2,(byte)2,(byte)2)); //auto home downwards and save the distance
+		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
+		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home +-+",(byte)2,(byte)1,(byte)2)); //auto home downwards and save the distance
+		autoHomingMenu.add(makeAutoHomeItem("Run Automatic Homing",EnumSet.allOf(Axis.class))); //auto home downwards from the saved distance
+		//autoHomingMenu.add(makeFirstTimeAutohomeWindowItem("First Time Home Window"));
+		
+		
+		//Old homing functions are now all grouped in this menu.
+		JMenu legacyHomeMenu = new JMenu("Legacy Homing"); 
+		bar.add(legacyHomeMenu);
+		legacyHomeMenu.add(makeHomeItem("Home X+",EnumSet.of(Axis.X),true));
+		legacyHomeMenu.add(makeHomeItem("Home X-",EnumSet.of(Axis.X),false));
+		legacyHomeMenu.add(makeHomeItem("Home Y+",EnumSet.of(Axis.Y),true));
+		legacyHomeMenu.add(makeHomeItem("Home Y-",EnumSet.of(Axis.Y),false));
+		legacyHomeMenu.add(makeHomeItem("Home Z+",EnumSet.of(Axis.Z),true));
+		legacyHomeMenu.add(makeHomeItem("Home Z-",EnumSet.of(Axis.Z),false));
+		legacyHomeMenu.add(new JSeparator());
+		legacyHomeMenu.add(makeHomeItem("Home XY+",EnumSet.of(Axis.X,Axis.Y),true));
+		legacyHomeMenu.add(makeHomeItem("Home XY-",EnumSet.of(Axis.X,Axis.Y),false));
+		legacyHomeMenu.add(makeHomeItem("Home all+",EnumSet.allOf(Axis.class),true));
+		legacyHomeMenu.add(makeHomeItem("Home all-",EnumSet.allOf(Axis.class),false));
+		legacyHomeMenu.add(makeHomeItem("Home XZ-",EnumSet.of(Axis.X,Axis.Z),false));
+		legacyHomeMenu.add(makeHomeItem("Home YZ-",EnumSet.of(Axis.Y,Axis.Z),false));
+		
 		return bar;
 	}
 

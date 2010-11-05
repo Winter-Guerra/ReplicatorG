@@ -75,10 +75,12 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 		//set to 1 
 		direction[1] = 1;
 	}
-if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
-	direction[2] = 3;
+
+//if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
+	//direction[2] = 3;
 	
-} else if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
+//} else 
+ if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
 	// set z packet to to 2
 		direction[2] = 2;
 		
@@ -87,12 +89,40 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		direction[2] = 1;
 	}
 		//set z mm to lift regardless of anything.
-		((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
+		/*((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
+		
+		startHomingDialog(direction);
 		
 		try {
 		driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
 		} catch (RetryException e1) {
 		Base.logger.severe("Can't setup homing; machine busy");
+		} */
+		
+		startHomingDialog(direction);
+		
+	}
+	
+	private void startHomingDialog(byte direction[]) {
+		int confirm = JOptionPane.showConfirmDialog(this, 
+				"<html>Please center the Build Platform and the Z stage so that the extruder nozzle<br/>"+
+				"is in the center of the Build Platform and a hair from touching it. Also make sure <br/> that"+
+				" the extruder is currently cool and not extruding. <br/><br/>" +
+				"Press Yes when ready.</html>",
+				"Get ready to Home!", 
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.WARNING_MESSAGE);
+		if (confirm == JOptionPane.YES_OPTION) {
+			//driver.reset();
+			//set all varibles in EEPROM that the Bot needs, then start homing.
+			
+			((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
+			
+			try {
+				driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
+				} catch (RetryException e1) {
+				Base.logger.severe("Can't setup homing; machine busy");
+				}
 		}
 	}
 
@@ -119,15 +149,18 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 	
 	private JPanel makeConfigPanel() { //add the commit and cancel buttons to a panel
 		JPanel panel = new JPanel(new MigLayout());
-//label description of what this window is about
+		//label description of what this window is about
 		
-		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must first select three endstops"
-				+ "<br>" + "that are currently installed on your 'bot (one for each axis). " + "</html>"); //OMG, do I really have to use HTML line breaks? 
+		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must first select three <br> endstops"
+				 + " that are currently installed on your 'bot (one for each axis)." + "</html>"); 
+		//OMG, do I really have to use HTML line breaks? No automatic wrap? Wow. Java swing fail...
+		
 		panel.add(description, "wrap");//moving to next row here...
 		panel.add(createEndstopPanel(), "wrap");
 		
+		/*
 		//ask if using Zaggo Z-Probe
-		panel.add(new JLabel("Next tell me, is Zaggo's Z-Probe hardware installed on this 'bot?"), "gaptop 25, wrap");
+		panel.add(new JLabel("Is Zaggo's Z-Probe hardware installed on this 'bot?"), "gaptop 25, wrap");
 		ZaggoZprobe.addItemListener( //listen to ZaggoZprobe checkbox
 			    new ItemListener() {
 			        public void itemStateChanged(ItemEvent e) {
@@ -142,12 +175,13 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 			        }
 			    } );
 			    panel.add(ZaggoZprobe, "gapleft 30, wrap");
+			    */
 		//ask for zAxislift value (default 10);
 		zAxisMMToLift.setColumns(16);
 		zAxisMMToLift.setText(DefaultZAxisMMToLift);
-		panel.add(new JLabel("<html>"+"Finally, tell me how many millimeters should I lift the Z axis"
-				+"<br>"+"before attempting to home" + "<br>"
-				+"(To avoid accidental nozzle crashes into the build platform)."+"</html>"), "gaptop 25, wrap"); //Z axis lift
+		panel.add(new JLabel("<html>"+"How many millimeters should the Z axis lift" + 
+				"<br>"+"before attempting to home" + "<br>"
+				+"(To avoid accidental nozzle crashes into the build platform)."+"</html>"), "gaptop 20, wrap"); //Z axis lift
 		panel.add(zAxisMMToLift,"gapleft 30, wrap");
 		
 		return panel;
