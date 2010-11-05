@@ -31,6 +31,7 @@ import replicatorg.app.ui.controlpanel.Endstop3AxisPanel;
 import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
+import replicatorg.drivers.PenPlotter;
 import replicatorg.machine.model.Axis;
 import replicatorg.drivers.RetryException;
 import replicatorg.app.Base;
@@ -78,38 +79,52 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 		JPanel panel = new JPanel(new MigLayout());
 		//label description of what this window is about
 		
-		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must first select three <br> endstops"
-				 + " that are currently installed on your 'bot (one for each axis)." + "</html>"); 
+		JLabel description = new JLabel("<html>" 
+				+ "To use Zaggo's Z-Probe hardware, you must define what servo position<br>"
+				+ "values (0-180) you want to use for the Raised and Lowered servo positions.<br>" 
+				+ "You can use the buttons to the right of each textbox to send test commands<br>"
+				+ "to the Makerbot." + "</html>"); //description of what to do.
 		//OMG, do I really have to use HTML line breaks? No automatic wrap? Wow. Java swing fail...
 		
 		panel.add(description, "wrap");//moving to next row here...
 		
 		
-		//ask if using Zaggo Z-Probe
-		panel.add(new JLabel("Is Zaggo's Z-Probe hardware installed on this 'bot?"), "gaptop 25, wrap");
-		ZaggoZprobe.addItemListener( //listen to ZaggoZprobe checkbox
-			    new ItemListener() {
-			        public void itemStateChanged(ItemEvent e) {
-			            // Turn off Z axis buttons whenever box is checked
-			        	if (ZaggoZprobe.isSelected()) {
-			        		EndstopPanel.zMinusButton.setEnabled(false);
-			        		EndstopPanel.zPlusButton.setEnabled(false);
-			        	} else { //turn back on when unchecked
-			        		EndstopPanel.zMinusButton.setEnabled(true);
-			        		EndstopPanel.zPlusButton.setEnabled(true);
-			        	}
-			        }
-			    } );
-			    panel.add(ZaggoZprobe, "gapleft 30, wrap");
-			    
-		//ask for zAxislift value (default 10);
-		zAxisMMToLift.setColumns(16);
-		zAxisMMToLift.setText(DefaultZAxisMMToLift);
-		panel.add(new JLabel("<html>"+"How many millimeters should the Z axis lift" + 
-				"<br>"+"before attempting to home" + "<br>"
-				+"(To avoid accidental nozzle crashes into the build platform)."+"</html>"), "gaptop 20, wrap"); //Z axis lift
-		panel.add(zAxisMMToLift,"gapleft 30, wrap");
+		//give me labels textboxes and test buttons! MOAR BUTTONS! MOAR!!
+		panel.add(new JLabel("Servo raised position"), "gaptop 25, wrap"); //label
+		servoLiftPosition.setColumns(16);
+		panel.add(servoLiftPosition, "split 2,flowx"); //textbox
+		JButton TestLift = new JButton("Send Test Command"); //test button
+		TestLift.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+			//Send servo test command.
+				try {
+					((PenPlotter)driver).setServo2Pos(Double.parseDouble(servoLiftPosition.getText()));
+					} catch (RetryException e1) {
+					Base.logger.severe("Can't send command; machine busy");
+					}
+			}
+		});
+		panel.add(TestLift, "Wrap");
 		
+		
+		panel.add(new JLabel("Servo lowered position"), "gaptop 25, wrap"); //label
+		servoLowerPosition.setColumns(16);
+		panel.add(servoLowerPosition, "split 2,flowx"); //textbox
+		JButton TestLower = new JButton("Send Test Command"); //test button
+		TestLower.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+			//Send servo test command.	
+				try {
+					((PenPlotter)driver).setServo2Pos(Double.parseDouble(servoLowerPosition.getText()));
+					} catch (RetryException e1) {
+					Base.logger.severe("Can't send command; machine busy");
+					}
+				//Double.parseDouble(aString)
+			}
+		});
+		panel.add(TestLower, "Wrap");
+		
+	
 		return panel;
 	}
 	
@@ -142,4 +157,12 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 		add(mainpanel); //return this panel...
 		
 	}
+	
+	private void commit() {
+		//Commit Servo position data to EEPROM and then hand control back to the Homing setup window.
+		//(Or call the reminder prompt yourself it its too hard to wait)
+	}
+
+	
+	
 }

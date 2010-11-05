@@ -78,18 +78,23 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 
 if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
 	direction[2] = 3;
+	HomingSetupWindowZProbePrompt setServos = HomingSetupWindowZProbePrompt.getHomingWindowZProbePrompt(machine);
+	if (setServos != null) {
+		setServos.pack();
+		setServos.setVisible(true);
+		setServos.toFront();
+	}	
 	
 } else if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
 	// set z packet to to 2
 		direction[2] = 2;
+		startHomingDialog(direction);
 		
 	} else if (EndstopPanel.zMinusButton.isSelected()){
 		//set to 1 
 		direction[2] = 1;
-	}
-	
-		
 		startHomingDialog(direction);
+	}
 		
 	}
 	
