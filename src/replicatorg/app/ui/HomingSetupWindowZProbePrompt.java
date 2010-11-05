@@ -36,93 +36,30 @@ import replicatorg.drivers.RetryException;
 import replicatorg.app.Base;
 
 /**
- * A panel for initiating the first time homing sequence and all of its settings.
+ * A popup panel for setting the Z-Probe servo position settings
  * @author xtremd
  *
  */
-public class HomingSetupWindow extends JFrame {
+public class HomingSetupWindowZProbePrompt extends JFrame {
 	private static final long serialVersionUID = 7876192459063774731L;
-	public static HomingSetupWindow HomingSetupWindow;
+	public static HomingSetupWindowZProbePrompt HomingSetupWindowZProbePrompt;
 	protected MachineController machine;
 
 	protected Driver driver;
 
 	protected JPanel mainPanel;
-	protected Endstop3AxisPanel EndstopPanel;
-	private JCheckBox ZaggoZprobe = new JCheckBox("Installed!");
-	private static String DefaultZAxisMMToLift = "10";
-	private JTextField zAxisMMToLift = new JTextField();
+	private JTextField servoLiftPosition = new JTextField();
+	private JTextField servoLowerPosition = new JTextField();
 	
 	
-	private void commit() {
-		// if negatives are selected then pass 1 else pass two, if Zaggo z-probe, pass Z 3.
-		byte direction[] = {0,0,0}; //array that holds the direction vals for XYZ. Zaggo Z-Probe is Z = 3.
-		
-		
-if (EndstopPanel.xPlusButton.isSelected()) { //if xPlus button is selected then
-// set x packet to to 2
-	direction[0] = 2;
 	
-} else if (EndstopPanel.xMinusButton.isSelected()) {
-	//set to 1 
-	direction[0] = 1;
-}
-if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
-	// set y packet to to 2
-		direction[1] = 2;
-		
-	} else if (EndstopPanel.yMinusButton.isSelected()) {
-		//set to 1 
-		direction[1] = 1;
-	}
-
-if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
-	direction[2] = 3;
-	
-} else if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
-	// set z packet to to 2
-		direction[2] = 2;
-		
-	} else if (EndstopPanel.zMinusButton.isSelected()){
-		//set to 1 
-		direction[2] = 1;
-	}
-	
-		
-		startHomingDialog(direction);
-		
-	}
-	
-	private void startHomingDialog(byte direction[]) {
-		int confirm = JOptionPane.showConfirmDialog(this, 
-				"<html>Please center the Build Platform and the Z stage so that the extruder nozzle<br/>"+
-				"is in the center of the Build Platform and a hair from touching it. Also make sure <br/> that"+
-				" the extruder is currently cool and not extruding. <br/><br/>" +
-				"Press Yes when ready.</html>",
-				"Get ready to Home!", 
-				JOptionPane.YES_NO_OPTION,
-				JOptionPane.WARNING_MESSAGE);
-		if (confirm == JOptionPane.YES_OPTION) {
-			//driver.reset();
-			//set all varibles in EEPROM that the Bot needs, then start homing.
-			
-			((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
-			
-			try {
-				driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
-				} catch (RetryException e1) {
-				Base.logger.severe("Can't setup homing; machine busy");
-				}
-		}
-	}
-
 	private JPanel makeButtonPanel() { //add the commit and cancel buttons to a panel
 		JPanel panel = new JPanel(new MigLayout());
 		JButton commitButton = new JButton("Commit homing settings!");
 		commitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				HomingSetupWindow.this.commit();
-				HomingSetupWindow.this.dispose();				
+				HomingSetupWindowZProbePrompt.this.commit();
+				HomingSetupWindowZProbePrompt.this.dispose();				
 			}
 		});
 		panel.add(commitButton);
@@ -130,14 +67,14 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				HomingSetupWindow.this.dispose();
+				HomingSetupWindowZProbePrompt.this.dispose();
 			}
 		});
 		panel.add(cancelButton);
 		return panel;
 	}
 	
-	private JPanel makeConfigPanel() { //add the commit and cancel buttons to a panel
+	private JPanel makeConfigPanel() { //add the description, textboxes and testbuttons
 		JPanel panel = new JPanel(new MigLayout());
 		//label description of what this window is about
 		
@@ -146,7 +83,6 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		//OMG, do I really have to use HTML line breaks? No automatic wrap? Wow. Java swing fail...
 		
 		panel.add(description, "wrap");//moving to next row here...
-		panel.add(createEndstopPanel(), "wrap");
 		
 		
 		//ask if using Zaggo Z-Probe
@@ -177,20 +113,16 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		return panel;
 	}
 	
-	protected JComponent createEndstopPanel() {
-		EndstopPanel = new Endstop3AxisPanel(machine);
-		return EndstopPanel;
-	}
 	
-	private static HomingSetupWindow instance = null;
+	private static HomingSetupWindowZProbePrompt instance = null;
 
-	public static synchronized HomingSetupWindow getHomingWindow(MachineController m) { //initialize the homing window
+	public static synchronized HomingSetupWindowZProbePrompt getHomingWindowZProbePrompt(MachineController m) { //initialize the homing window
 		if (instance == null) {
-			instance = new HomingSetupWindow(m);
+			instance = new HomingSetupWindowZProbePrompt(m);
 		} else {
 			if (instance.machine != m) {
 				instance.dispose();
-				instance = new HomingSetupWindow(m);
+				instance = new HomingSetupWindowZProbePrompt(m);
 			}
 		}
 		return instance;
@@ -199,8 +131,8 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 	
 	
 	
-	public HomingSetupWindow(MachineController m) { //set everything up and open homing window...
-		super("Homing Setup Window"); //Title in the bar up top.
+	public HomingSetupWindowZProbePrompt(MachineController m) { //set everything up and open homing window...
+		super("ZProbe Servo Setup Window"); //Title in the bar up top.
 		machine = m; //get our drivers
 		driver = machine.getDriver();
 		JPanel mainpanel = new JPanel(new MigLayout()); //start setting up the window
@@ -208,7 +140,6 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		mainpanel.add(makeConfigPanel(), "wrap"); //panel with Description, XYZ and Settings
 		mainpanel.add(makeButtonPanel(), "wrap"); //commit and cancel buttons
 		add(mainpanel); //return this panel...
-		//Update Zaxis mm to lift from eeprom settings...
 		
 	}
 }
