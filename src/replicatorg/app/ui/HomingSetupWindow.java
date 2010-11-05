@@ -76,11 +76,10 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 		direction[1] = 1;
 	}
 
-//if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
-	//direction[2] = 3;
+if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
+	direction[2] = 3;
 	
-//} else 
- if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
+} else if (EndstopPanel.zPlusButton.isSelected()) { //if xPlus button is selected then
 	// set z packet to to 2
 		direction[2] = 2;
 		
@@ -88,16 +87,7 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 		//set to 1 
 		direction[2] = 1;
 	}
-		//set z mm to lift regardless of anything.
-		/*((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText());
-		
-		startHomingDialog(direction);
-		
-		try {
-		driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
-		} catch (RetryException e1) {
-		Base.logger.severe("Can't setup homing; machine busy");
-		} */
+	
 		
 		startHomingDialog(direction);
 		
@@ -158,7 +148,7 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 		panel.add(description, "wrap");//moving to next row here...
 		panel.add(createEndstopPanel(), "wrap");
 		
-		/*
+		
 		//ask if using Zaggo Z-Probe
 		panel.add(new JLabel("Is Zaggo's Z-Probe hardware installed on this 'bot?"), "gaptop 25, wrap");
 		ZaggoZprobe.addItemListener( //listen to ZaggoZprobe checkbox
@@ -175,7 +165,7 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 			        }
 			    } );
 			    panel.add(ZaggoZprobe, "gapleft 30, wrap");
-			    */
+			    
 		//ask for zAxislift value (default 10);
 		zAxisMMToLift.setColumns(16);
 		zAxisMMToLift.setText(DefaultZAxisMMToLift);

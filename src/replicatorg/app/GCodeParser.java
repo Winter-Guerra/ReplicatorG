@@ -549,6 +549,14 @@ public class GCodeParser {
 				}
 				break;
 
+			case 301:
+				if (hasCode("S")) {
+					if (driver instanceof PenPlotter) {
+						((PenPlotter)driver).setServo2Pos(getCodeValue("S"));
+					}
+				}
+				break;
+
 
 			// set build platform temperature
 			case 109:
