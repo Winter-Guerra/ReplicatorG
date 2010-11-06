@@ -1416,13 +1416,18 @@ public void setServo2Pos(double degree) throws RetryException {
 	/// 0x100, 0x101, 0x102. 256, 257, 258. Autohome direction settings (0 for axis disabled, 1 for -, 2 for +) 1 per each axis.
 	/// 0x103-06, 0x107-0x10a, 0x10b-0x10e. 259-262, 263-266, 267-270. Steps to move per axis. (Autohome axis varibles)
 	/// 0x10f-0x112. 271-274. Amount to move Zstage up during a home or safemove.
-
+	/// 0x113 275 Autohome extruder servo tool index
+	/// 0x114 276 Autohome extruder Z_Probe lift angle
+	/// 0x115 277 Autohome Extruder Z-Probe lowered angle
 	
 	final private static int EEPROM_CHECK_OFFSET = 0;
 	final private static int EEPROM_MACHINE_NAME_OFFSET = 32;
 	final private static int EEPROM_AUTOHOME_DIRECTIONS = 256;
 	final private static int EEPROM_AUTOHOME_STEPS_PER_AXIS = 259;
 	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 271;
+	final private static int EEPROM_Z_PROBE_EXTRUDER_TOOL_INDEX = 275;
+	final private static int EEPROM_Z_PROBE_EXTRUDER_LIFT_ANGLE = 276;
+	final private static int EEPROM_Z_PROBE_EXTRUDER_LOWERED_ANGLE = 277;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
 	final private static int EEPROM_EXTRA_FEATURES = 0x0018;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
@@ -1503,6 +1508,25 @@ public void setServo2Pos(double degree) throws RetryException {
 		//pb.add32((long) steps.y);
 		//pb.add32((long) steps.z);
 		writeToEEPROM32(EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET,(long) steps.z);
+	}
+	
+	public void setZProbeSettings(String servoLiftPos, String servoLoweredPos, byte toolIndex) {
+		servoLiftPos = new String(servoLiftPos);
+		byte liftPos[] = new byte[1];
+		liftPos[0] = Byte.valueOf(servoLiftPos);
+		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_LIFT_ANGLE, liftPos);
+		
+		servoLiftPos = new String(servoLoweredPos);
+		byte loweredPos[] = new byte[1];
+		loweredPos[0] = Byte.valueOf(servoLoweredPos);
+		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_LOWERED_ANGLE, loweredPos);
+	
+		
+		//toolIndex = new String(toolIndex);
+		byte toolIndexByte[] = new byte[1];
+		toolIndexByte[0] = toolIndex;
+		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_TOOL_INDEX, liftPos);
+	
 	}
 	
 	public boolean hasFeatureOnboardParameters() {

@@ -52,11 +52,12 @@ public class HomingSetupWindow extends JFrame {
 	private JCheckBox ZaggoZprobe = new JCheckBox("Installed!");
 	private static String DefaultZAxisMMToLift = "10";
 	private JTextField zAxisMMToLift = new JTextField();
+	public static byte direction[] = {0,0,0}; //array that holds the direction vals for XYZ. Zaggo Z-Probe is Z = 3.
 	
 	
 	private void commit() {
 		// if negatives are selected then pass 1 else pass two, if Zaggo z-probe, pass Z 3.
-		byte direction[] = {0,0,0}; //array that holds the direction vals for XYZ. Zaggo Z-Probe is Z = 3.
+		//byte direction[] = {0,0,0}; //array that holds the direction vals for XYZ. Zaggo Z-Probe is Z = 3.
 		
 		
 if (EndstopPanel.xPlusButton.isSelected()) { //if xPlus button is selected then
@@ -78,6 +79,7 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 
 if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
 	direction[2] = 3;
+	((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
 	HomingSetupWindowZProbePrompt setServos = HomingSetupWindowZProbePrompt.getHomingWindowZProbePrompt(machine);
 	if (setServos != null) {
 		setServos.pack();
@@ -98,7 +100,7 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		
 	}
 	
-	private void startHomingDialog(byte direction[]) {
+	void startHomingDialog(byte direction[]) {
 		int confirm = JOptionPane.showConfirmDialog(this, 
 				"<html>Please center the Build Platform and the Z stage so that the extruder nozzle<br/>"+
 				"is in the center of the Build Platform and a hair from touching it. Also make sure <br/> that"+
@@ -215,5 +217,10 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		add(mainpanel); //return this panel...
 		//Update Zaxis mm to lift from eeprom settings...
 		
+	}
+
+	public static byte[] getDirection() {
+		
+		return direction;
 	}
 }

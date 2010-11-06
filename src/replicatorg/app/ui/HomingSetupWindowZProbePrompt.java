@@ -31,6 +31,7 @@ import replicatorg.app.ui.controlpanel.Endstop3AxisPanel;
 import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
+import replicatorg.machine.model.ToolModel;
 import replicatorg.drivers.PenPlotter;
 import replicatorg.machine.model.Axis;
 import replicatorg.drivers.RetryException;
@@ -161,7 +162,39 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 	private void commit() {
 		//Commit Servo position data to EEPROM and then hand control back to the Homing setup window.
 		//(Or call the reminder prompt yourself it its too hard to wait)
+		//Double.parseDouble(servoLowerPosition.getText()
+		//submit stuff to eeprom and set extruder index to 0 (default)
+		((OnboardParameters)driver).setZProbeSettings(servoLiftPosition.getText(), servoLowerPosition.getText(), (byte) 0);
+		
+		byte directions[] = new byte[3];
+		directions = HomingSetupWindow.direction;
+		startHomingDialogFromZProbePrompt(directions);
+		
+		
 	}
+	void startHomingDialogFromZProbePrompt(byte direction[]) {
+		int confirm = JOptionPane.showConfirmDialog(this, 
+				"<html>Please center the Build Platform and the Z stage so that the extruder nozzle<br/>"+
+				"is in the center of the Build Platform and a hair from touching it. Also make sure <br/> that"+
+				" the extruder is currently cool and not extruding. <br/><br/>" +
+				"Press Yes when ready.</html>",
+				"Get ready to Home!", 
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.WARNING_MESSAGE);
+		if (confirm == JOptionPane.YES_OPTION) {
+			//driver.reset();
+			//set all varibles in EEPROM that the Bot needs, then start homing.
+			
+			//((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
+			
+			try {
+				driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
+				} catch (RetryException e1) {
+				Base.logger.severe("Can't setup homing; machine busy");
+				}
+		}
+	}
+
 
 	
 	
