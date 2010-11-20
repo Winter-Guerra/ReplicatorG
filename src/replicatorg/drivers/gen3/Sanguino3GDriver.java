@@ -1349,7 +1349,17 @@ public void setServo2Pos(double degree) throws RetryException {
 		PacketResponse pr = runQuery(pb.getPacket());
 		//assert pr.get32() == data.length; 
 	}
+	
+	private void writeToEEPROM8(int offset, double data) {
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WRITE_EEPROM.getCode());
+		pb.add16(offset);
+		pb.add8(1);
+		pb.add8((byte) data);
+		PacketResponse pr = runQuery(pb.getPacket());
+		//assert pr.get32() == data.length; 
+	}
 
+	
 	private byte[] readFromToolEEPROM(int offset, int len) {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
 		pb.add8((byte) machine.currentTool().getIndex());
@@ -1512,20 +1522,20 @@ public void setServo2Pos(double degree) throws RetryException {
 	
 	public void setZProbeSettings(String servoLiftPos, String servoLoweredPos, byte toolIndex) {
 		servoLiftPos = new String(servoLiftPos);
-		byte liftPos[] = new byte[1];
-		liftPos[0] = Byte.valueOf(servoLiftPos);
-		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_LIFT_ANGLE, liftPos);
+		double liftPos;
+		liftPos = Double.valueOf(servoLiftPos);
+		writeToEEPROM8(EEPROM_Z_PROBE_EXTRUDER_LIFT_ANGLE, liftPos);
 		
 		servoLiftPos = new String(servoLoweredPos);
-		byte loweredPos[] = new byte[1];
-		loweredPos[0] = Byte.valueOf(servoLoweredPos);
-		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_LOWERED_ANGLE, loweredPos);
+		double loweredPos;
+		loweredPos = Double.valueOf(servoLoweredPos);
+		writeToEEPROM8(EEPROM_Z_PROBE_EXTRUDER_LOWERED_ANGLE, loweredPos);
 	
 		
 		//toolIndex = new String(toolIndex);
 		byte toolIndexByte[] = new byte[1];
 		toolIndexByte[0] = toolIndex;
-		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_TOOL_INDEX, liftPos);
+		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_TOOL_INDEX, toolIndexByte);
 	
 	}
 	
