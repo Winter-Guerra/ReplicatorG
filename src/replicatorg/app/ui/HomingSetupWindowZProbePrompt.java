@@ -52,6 +52,8 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 	protected JPanel mainPanel;
 	private JTextField servoLiftPosition = new JTextField();
 	private JTextField servoLowerPosition = new JTextField();
+	private static String DefaultPosition = "0";
+	
 	
 	
 	
@@ -84,7 +86,11 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 				+ "To use Zaggo's Z-Probe hardware, you must define what servo position<br>"
 				+ "values (0-180) you want to use for the Raised and Lowered servo positions.<br>" 
 				+ "You can use the buttons to the right of each textbox to send test commands<br>"
-				+ "to the Makerbot." + "</html>"); //description of what to do.
+				+ "to the Makerbot.<br> <br>"
+				+ "Just as a reminder, the servo should be connected to pin D10 on the Extruder<br>" 
+				+ "board, with the black wire connected to the pin labeled \"-\" and the red wire<br>" 
+				+ "to the pin labeled \"+\"." 
+				+ "</html>"); //description of what to do.
 		//OMG, do I really have to use HTML line breaks? No automatic wrap? Wow. Java swing fail...
 		
 		panel.add(description, "wrap");//moving to next row here...
@@ -92,7 +98,8 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 		
 		//give me labels textboxes and test buttons! MOAR BUTTONS! MOAR!!
 		panel.add(new JLabel("Servo raised position"), "gaptop 25, wrap"); //label
-		servoLiftPosition.setColumns(16);
+		servoLiftPosition.setColumns(16); //set width
+		servoLiftPosition.setText(DefaultPosition);
 		panel.add(servoLiftPosition, "split 2,flowx"); //textbox
 		JButton TestLift = new JButton("Send Test Command"); //test button
 		TestLift.addActionListener(new ActionListener() {
@@ -109,7 +116,8 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 		
 		
 		panel.add(new JLabel("Servo lowered position"), "gaptop 25, wrap"); //label
-		servoLowerPosition.setColumns(16);
+		servoLowerPosition.setColumns(16); //set width
+		servoLowerPosition.setText(DefaultPosition);
 		panel.add(servoLowerPosition, "split 2,flowx"); //textbox
 		JButton TestLower = new JButton("Send Test Command"); //test button
 		TestLower.addActionListener(new ActionListener() {
