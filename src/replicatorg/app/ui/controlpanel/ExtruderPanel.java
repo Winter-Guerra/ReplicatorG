@@ -53,6 +53,8 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 	private ToolModel toolModel;
 	private MachineController machine;
 
+	public ToolModel getTool() { return toolModel; }
+	
 	protected JTextField currentTempField;
 	
 	protected JTextField platformCurrentTempField;
@@ -126,13 +128,24 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 		chartPanel.setOpaque(false);
 		return chartPanel;
 	}
+
+	private final Dimension labelMinimumSize = new Dimension(175, 25);
+
+	private JLabel makeLabel(String text) {
+		JLabel label = new JLabel();
+		label.setText(text);
+		label.setMinimumSize(labelMinimumSize);
+		label.setMaximumSize(labelMinimumSize);
+		label.setPreferredSize(labelMinimumSize);
+		label.setHorizontalAlignment(JLabel.LEFT);
+		return label;
+	}
 	
 	public ExtruderPanel(MachineController machine, ToolModel t) {
 		this.machine = machine;
 		this.toolModel = t;
 		
 		int textBoxWidth = 75;
-		Dimension labelMinimumSize = new Dimension(175, 25);
 		Dimension panelSize = new Dimension(420, 30);
 		Driver driver = machine.getDriver();
 
@@ -146,13 +159,8 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 			// cases.
 			{
 				// our motor speed vars
-				JLabel label = new JLabel();
+				JLabel label = makeLabel("Motor Speed (PWM)");
 				JTextField field = new JTextField();
-				label.setText("Motor Speed (PWM)");
-				label.setMinimumSize(labelMinimumSize);
-				label.setMaximumSize(labelMinimumSize);
-				label.setPreferredSize(labelMinimumSize);
-				label.setHorizontalAlignment(JLabel.LEFT);
 
 				field.setMaximumSize(new Dimension(textBoxWidth, 25));
 				field.setMinimumSize(new Dimension(textBoxWidth, 25));
@@ -167,14 +175,9 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 			}
 
 			if (t.motorHasEncoder() || t.motorIsStepper()) {
-				JLabel label = new JLabel();
-				JTextField field = new JTextField();
 				// our motor speed vars
-				label.setText("Motor Speed (RPM)");
-				label.setMinimumSize(labelMinimumSize);
-				label.setMaximumSize(labelMinimumSize);
-				label.setPreferredSize(labelMinimumSize);
-				label.setHorizontalAlignment(JLabel.LEFT);
+				JLabel label = makeLabel("Motor Speed (RPM)");
+				JTextField field = new JTextField();
 
 				field.setMaximumSize(new Dimension(textBoxWidth, 25));
 				field.setMinimumSize(new Dimension(textBoxWidth, 25));
@@ -188,11 +191,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 				add(field,"wrap");
 			}
 			// create our motor options
-			JLabel motorEnabledLabel = new JLabel("Motor Control");
-			motorEnabledLabel.setMinimumSize(labelMinimumSize);
-			motorEnabledLabel.setMaximumSize(labelMinimumSize);
-			motorEnabledLabel.setPreferredSize(labelMinimumSize);
-			motorEnabledLabel.setHorizontalAlignment(JLabel.LEFT);
+			JLabel motorEnabledLabel = makeLabel("Motor Control");
 
 			JRadioButton motorReverseButton = new JRadioButton("reverse");
 			motorReverseButton.setName("motor-reverse");
@@ -283,11 +282,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 
 		// flood coolant controls
 		if (t.hasFloodCoolant()) {
-			JLabel floodCoolantLabel = new JLabel("Flood Coolant");
-			floodCoolantLabel.setMinimumSize(labelMinimumSize);
-			floodCoolantLabel.setMaximumSize(labelMinimumSize);
-			floodCoolantLabel.setPreferredSize(labelMinimumSize);
-			floodCoolantLabel.setHorizontalAlignment(JLabel.LEFT);
+			JLabel floodCoolantLabel = makeLabel("Flood Coolant");
 
 			JCheckBox floodCoolantCheck = new JCheckBox("enable");
 			floodCoolantCheck.setName("flood-coolant");
@@ -299,11 +294,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 
 		// mist coolant controls
 		if (t.hasMistCoolant()) {
-			JLabel mistCoolantLabel = new JLabel("Mist Coolant");
-			mistCoolantLabel.setMinimumSize(labelMinimumSize);
-			mistCoolantLabel.setMaximumSize(labelMinimumSize);
-			mistCoolantLabel.setPreferredSize(labelMinimumSize);
-			mistCoolantLabel.setHorizontalAlignment(JLabel.LEFT);
+			JLabel mistCoolantLabel = makeLabel("Mist Coolant");
 
 			JCheckBox mistCoolantCheck = new JCheckBox("enable");
 			mistCoolantCheck.setName("mist-coolant");
@@ -322,11 +313,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 				fanString = xml.getAttribute("name");
 				enableString = xml.getAttribute("actuated");
 			}
-			JLabel fanLabel = new JLabel(fanString);
-			fanLabel.setMinimumSize(labelMinimumSize);
-			fanLabel.setMaximumSize(labelMinimumSize);
-			fanLabel.setPreferredSize(labelMinimumSize);
-			fanLabel.setHorizontalAlignment(JLabel.LEFT);
+			JLabel fanLabel = makeLabel(fanString);
 
 			JCheckBox fanCheck = new JCheckBox(enableString);
 			fanCheck.setName("fan-check");
@@ -334,6 +321,20 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 
 			add(fanLabel);
 			add(fanCheck,"wrap");
+		}
+
+		// cooling fan controls
+		if (t.hasAutomatedPlatform()) {
+			String abpString = "Build platform belt";
+			String enableString = "enable";
+			JLabel abpLabel = makeLabel(abpString);
+
+			JCheckBox abpCheck = new JCheckBox(enableString);
+			abpCheck.setName("abp-check");
+			abpCheck.addItemListener(this);
+
+			add(abpLabel);
+			add(abpCheck,"wrap");
 		}
 
 		// valve controls
@@ -347,11 +348,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 				enableString = xml.getAttribute("actuated");
 			}
 			
-			JLabel valveLabel = new JLabel(valveString);
-			valveLabel.setMinimumSize(labelMinimumSize);
-			valveLabel.setMaximumSize(labelMinimumSize);
-			valveLabel.setPreferredSize(labelMinimumSize);
-			valveLabel.setHorizontalAlignment(JLabel.LEFT);
+			JLabel valveLabel = makeLabel(valveString);
 
 			JCheckBox valveCheck = new JCheckBox(enableString);
 			valveCheck.setName("valve-check");
@@ -363,11 +360,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 
 		// valve controls
 		if (t.hasCollet()) {
-			JLabel colletLabel = new JLabel("Collet");
-			colletLabel.setMinimumSize(labelMinimumSize);
-			colletLabel.setMaximumSize(labelMinimumSize);
-			colletLabel.setPreferredSize(labelMinimumSize);
-			colletLabel.setHorizontalAlignment(JLabel.LEFT);
+			JLabel colletLabel = makeLabel("Collet");
 
 			JCheckBox colletCheck = new JCheckBox("open");
 			colletCheck.setName("collet-check");
@@ -473,6 +466,8 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 					driver.enableMistCoolant();
 				else if (name.equals("fan-check"))
 					driver.enableFan();
+				else if (name.equals("abp-check"))
+					driver.enableFan();
 				else if (name.equals("valve-check"))
 					driver.openValve();
 				else if (name.equals("collet-check"))
@@ -490,12 +485,12 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 					driver.disableMistCoolant();
 				else if (name.equals("fan-check"))
 					driver.disableFan();
+				else if (name.equals("abp-check"))
+					driver.disableFan();
 				else if (name.equals("valve-check"))
 					driver.closeValve();
 				else if (name.equals("collet-check"))
 					driver.closeCollet();
-				// else
-				// System.out.println("checkbox deselected: " + source.getName());
 			}
 		} catch (RetryException r) {
 			Base.logger.severe("Could not execute command; machine busy.");			

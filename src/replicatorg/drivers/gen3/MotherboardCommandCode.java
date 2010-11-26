@@ -27,6 +27,8 @@ public enum MotherboardCommandCode {
 	RESET(17),
 
 	NEXT_FILENAME(18),
+	// Get the build name
+	GET_BUILD_NAME(20),
 	
 	WRITE_EEPROM32(20),
 	
@@ -41,7 +43,8 @@ public enum MotherboardCommandCode {
 	TOOL_COMMAND(136),
 	ENABLE_AXES(137),
 	FIRST_AUTO_RAFT(138),
-	AUTO_RAFT(139);
+	AUTO_RAFT(139),
+	WAIT_FOR_PLATFORM(141);
 	
 	private int code;
 	private MotherboardCommandCode(int code) {

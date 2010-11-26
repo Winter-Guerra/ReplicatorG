@@ -82,7 +82,7 @@ public class DriverBaseImplementation implements Driver {
 		// initialize our offsets
 		offsets = new Point3d[7];
 		for (int i = 0; i < 7; i++)
-			offsets[i] = new Point3d();
+			offsets[i] = new Point3d();  // Constructs and initializes a Point3d to (0,0,0)
 
 		// initialize our driver
 		parser.init(this);
@@ -105,6 +105,10 @@ public class DriverBaseImplementation implements Driver {
 
 	public void initialize() {
 		setInitialized(true);
+	}
+
+	public void uninitialize() {
+		setInitialized(false);
 	}
 
 	public void setInitialized(boolean status) {
@@ -203,6 +207,18 @@ public class DriverBaseImplementation implements Driver {
 
 	public Point3d getOffset(int i) {
 		return offsets[i];
+	}
+
+	public void setOffsetX(int offsetSystemNum, double j) {
+		offsets[offsetSystemNum].x = j;
+	}
+
+	public void setOffsetY(int offsetSystemNum, double j) {
+		offsets[offsetSystemNum].y = j;
+	}
+
+	public void setOffsetZ(int offsetSystemNum, double j) {
+		offsets[offsetSystemNum].z = j;
 	}
 
 	private Point3d currentPosition = null;
@@ -367,7 +383,7 @@ public class DriverBaseImplementation implements Driver {
 	 * Tool interface functions
 	 * @throws RetryException 
 	 **************************************************************************/
-	public void requestToolChange(int toolIndex) throws RetryException {
+	public void requestToolChange(int toolIndex, int timeout) throws RetryException {
 		machine.selectTool(toolIndex);
 	}
 

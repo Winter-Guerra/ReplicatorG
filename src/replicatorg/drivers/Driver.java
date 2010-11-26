@@ -85,6 +85,11 @@ public interface Driver {
 	public void initialize() throws VersionException;
 		
 	/**
+	 * uninitializes driver (disconnects from machine)
+	 */
+	public void uninitialize();
+
+	/**
 	 * See if the driver has been successfully initialized.
 	 * 
 	 * @return true if the driver is initialized
@@ -154,13 +159,19 @@ public interface Driver {
 
 	public Point3d getOffset(int i);
 
+	public void setOffsetX(int i, double j);
+
+	public void setOffsetY(int i, double j);
+
+	public void setOffsetZ(int i, double j);
+
 	public Point3d getPosition();
 
 	/**
 	 * Tool methods
 	 * @throws RetryException 
 	 */
-	public void requestToolChange(int toolIndex) throws RetryException;
+	public void requestToolChange(int toolIndex, int timeout) throws RetryException;
 
 	public void selectTool(int toolIndex) throws RetryException;
 
