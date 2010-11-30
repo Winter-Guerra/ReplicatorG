@@ -28,6 +28,7 @@ import java.awt.*;
 import net.miginfocom.swing.MigLayout;
 import replicatorg.app.MachineController;
 import replicatorg.app.ui.controlpanel.Endstop3AxisPanel;
+import replicatorg.app.ui.controlpanel.ExtruderPanel;
 import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
@@ -172,12 +173,13 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 		//(Or call the reminder prompt yourself it its too hard to wait)
 		//Double.parseDouble(servoLowerPosition.getText()
 		//submit stuff to eeprom and set extruder index to 0 (default)
+		ExtruderPanel.graphPaused = true; //the graph sometimes conflicts so lets disable it!
 		((OnboardParameters)driver).setZProbeSettings(servoLiftPosition.getText(), servoLowerPosition.getText(), (byte) 0);
-		
+
+		ExtruderPanel.graphPaused = false; //re enable
 		byte directions[] = new byte[3];
 		directions = HomingSetupWindow.direction;
 		startHomingDialogFromZProbePrompt(directions);
-		
 		
 	}
 	void startHomingDialogFromZProbePrompt(byte direction[]) {
@@ -194,12 +196,13 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 			//set all varibles in EEPROM that the Bot needs, then start homing.
 			
 			//((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
-			
+			ExtruderPanel.graphPaused = true; //the graph sometimes conflicts so lets disable it!
 			try {
 				driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
 				} catch (RetryException e1) {
 				Base.logger.severe("Can't setup homing; machine busy");
 				}
+			ExtruderPanel.graphPaused = false; //re enable!
 		}
 	}
 

@@ -29,6 +29,7 @@ import net.miginfocom.swing.MigLayout;
 import replicatorg.app.MachineController;
 import replicatorg.app.ui.controlpanel.Endstop3AxisPanel;
 import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
+import replicatorg.app.ui.controlpanel.ExtruderPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
 import replicatorg.machine.model.Axis;
@@ -112,7 +113,7 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		if (confirm == JOptionPane.YES_OPTION) {
 			//driver.reset();
 			//set all varibles in EEPROM that the Bot needs, then start homing.
-			
+			ExtruderPanel.graphPaused = true; //the graph sometimes conflicts so lets disable it!
 			((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
 			
 			try {
@@ -120,6 +121,7 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 				} catch (RetryException e1) {
 				Base.logger.severe("Can't setup homing; machine busy");
 				}
+			ExtruderPanel.graphPaused = false; //re-enable it
 		}
 	}
 
@@ -189,7 +191,7 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		return EndstopPanel;
 	}
 	
-	private static HomingSetupWindow instance = null;
+	public static HomingSetupWindow instance = null;
 
 	public static synchronized HomingSetupWindow getHomingWindow(MachineController m) { //initialize the homing window
 		if (instance == null) {

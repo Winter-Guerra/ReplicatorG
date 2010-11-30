@@ -45,6 +45,7 @@ import org.w3c.dom.NodeList;
 
 import replicatorg.app.Base;
 import replicatorg.app.MachineController;
+import replicatorg.app.ui.HomingSetupWindow;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.RetryException;
 import replicatorg.machine.model.ToolModel;
@@ -68,6 +69,8 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 	final private static Color measuredPlatformColor = Color.WHITE;
 	
 	long startMillis = System.currentTimeMillis();
+	
+	public static volatile Boolean graphPaused = false;
 
 	private TimeTableXYDataset measuredDataset = new TimeTableXYDataset();
 	private TimeTableXYDataset targetDataset = new TimeTableXYDataset();
@@ -394,6 +397,8 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 	}
 
 	synchronized public void updateStatus() { // FIXME sync
+		//check if paused.
+		if (!graphPaused) { //continue if not paused
 		Second second = new Second(new Date(System.currentTimeMillis() - startMillis));
 		if (machine.getModel().currentTool() == toolModel && toolModel.hasHeater()) {
 			double temperature = machine.getDriver().getTemperature();
@@ -406,6 +411,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 			platformCurrentTempField.setText(Double.toString(temperature));
 			measuredPlatformDataset.add(second, temperature,"a");
 			targetPlatformDataset.add(second, targetPlatformTemperature,"a");
+		}
 		}
 	}
 
@@ -511,6 +517,6 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 			source.selectAll();
 		}
 	}
-
-
-}
+	
+	
+	}
