@@ -133,7 +133,6 @@ import replicatorg.machine.MachineProgressEvent;
 import replicatorg.machine.MachineState;
 import replicatorg.machine.MachineStateChangeEvent;
 import replicatorg.machine.MachineToolStatusEvent;
-import replicatorg.machine.MachineState.State;
 import replicatorg.model.Build;
 import replicatorg.model.BuildCode;
 import replicatorg.model.BuildElement;
@@ -784,7 +783,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		return menu;
 	}
 
-	JMenuItem onboardParamsItem = new JMenuItem("Cupcake Onboard Preferences...");
+	JMenuItem onboardParamsItem = new JMenuItem("Motherboard Onboard Preferences...");
 	JMenuItem extruderParamsItem = new JMenuItem("Toolhead Onboard Preferences...");
 	JMenuItem toolheadIndexingItem = new JMenuItem("Set Toolhead Index...");
 	
@@ -891,7 +890,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			// load it and set it.
 			Thread t = new Thread() {
 				public void run() {
-					loadMachine(name, machine.getMachineState().isConnected());
+					loadMachine(name, (machine != null) && machine.getMachineState().isConnected());
 				}
 			};
 			t.start();
@@ -2404,6 +2403,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	 */
 	public void loadMachine(String name, Boolean connect) {
 		setMachine(Base.loadMachine(name));
+		if (getMachine() == null) return; // abort on no selected machine
 		reloadSerialMenu();
 		
 		if(previewPanel != null)

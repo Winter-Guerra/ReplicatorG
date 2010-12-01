@@ -1556,6 +1556,7 @@ public void setServo2Pos(double degree) throws RetryException {
 	public String getMachineName() {
 		checkEEPROM();
 		byte[] data = readFromEEPROM(EEPROM_MACHINE_NAME_OFFSET,MAX_MACHINE_NAME_LEN);
+		if (data == null) { return new String(); }
 		try {
 			int len = 0;
 			while (len < MAX_MACHINE_NAME_LEN && data[len] != 0) len++;
