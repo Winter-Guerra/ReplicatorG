@@ -174,9 +174,19 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 		//Double.parseDouble(servoLowerPosition.getText()
 		//submit stuff to eeprom and set extruder index to 0 (default)
 		ExtruderPanel.graphPaused = true; //the graph sometimes conflicts so lets disable it!
-		((OnboardParameters)driver).setZProbeSettings(servoLiftPosition.getText(), servoLowerPosition.getText(), (byte) 0);
-
-		ExtruderPanel.graphPaused = false; //re enable
+		try {
+			((OnboardParameters)driver).setZProbeSettings(servoLiftPosition.getText(), servoLowerPosition.getText(), (byte) 0);
+		} catch (AssertionError ae) {
+			//If something bad happens when we try to send the commands to the 'bot. Close and print an error.
+			Base.logger.severe("Error while trying to preload settings onto the Makerbot. Is it connected?");
+			Base.logger.info("More info on the error: " + ae);
+			instance.dispose();
+			return;
+		} finally {
+			ExtruderPanel.graphPaused = false; //re enables graph
+		}
+		
+		//ExtruderPanel.graphPaused = false; //re enable
 		byte directions[] = new byte[3];
 		directions = HomingSetupWindow.direction;
 		startHomingDialogFromZProbePrompt(directions);
@@ -201,8 +211,9 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 				driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
 				} catch (RetryException e1) {
 				Base.logger.severe("Can't setup homing; machine busy");
+				} finally {
+					ExtruderPanel.graphPaused = false; //re enable!
 				}
-			ExtruderPanel.graphPaused = false; //re enable!
 		}
 	}
 

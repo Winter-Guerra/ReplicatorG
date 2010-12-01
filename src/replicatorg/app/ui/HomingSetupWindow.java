@@ -80,7 +80,20 @@ if (EndstopPanel.yPlusButton.isSelected()) { //if xPlus button is selected then
 
 if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value of 3
 	direction[2] = 3;
-	((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
+	//pause graph
+	ExtruderPanel.graphPaused = true;
+	try {
+		((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
+	} catch (Exception e) {
+		Base.logger.severe("Error while trying to preload settings onto the Makerbot. Is it connected?");
+		Base.logger.info("More info on the error: " + e);
+		return;
+	} finally {
+		ExtruderPanel.graphPaused = false; //unpause
+	}
+	
+	
+	
 	HomingSetupWindowZProbePrompt setServos = HomingSetupWindowZProbePrompt.getHomingWindowZProbePrompt(machine);
 	if (setServos != null) {
 		setServos.pack();
@@ -114,14 +127,22 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 			//driver.reset();
 			//set all varibles in EEPROM that the Bot needs, then start homing.
 			ExtruderPanel.graphPaused = true; //the graph sometimes conflicts so lets disable it!
-			((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
+			try {
+				((OnboardParameters)driver).setZstageMMtoLift(zAxisMMToLift.getText()); //set zlift
+			} catch (Exception ae) {
+				//If something bad happens when we try to send the commands to the 'bot. Close and print an error.
+				Base.logger.severe("Error while trying to home the Makerbot. Is it connected?");
+				Base.logger.info("More info on the error: " + ae);
+				return;
+			}
 			
 			try {
 				driver.firstHoming(direction,0,0); //fire off the command to the makerbot to start the homing
 				} catch (RetryException e1) {
-				Base.logger.severe("Can't setup homing; machine busy");
+					Base.logger.severe("Can't setup homing; machine busy");
+				} finally {
+					ExtruderPanel.graphPaused = false; //re-enable it
 				}
-			ExtruderPanel.graphPaused = false; //re-enable it
 		}
 	}
 
@@ -150,8 +171,12 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 		JPanel panel = new JPanel(new MigLayout());
 		//label description of what this window is about
 		
-		JLabel description = new JLabel("<html>" + "For the Makerbot to home correctly, you must first select three <br> endstops"
-				 + " that are currently installed on your 'bot (one for each axis)." + "</html>"); 
+		JLabel description = new JLabel("<html>" 
+				+ "For the Makerbot to home correctly, you must first select at least three <br>"
+				+ "endstops that are currently installed on your 'bot (one for each axis). <br>" 
+				+ "Four if you are either using Zaggo's Z-Probe hardware or homing the Z stage <br>" 
+				+ "downward (i.e. you must have an endstop installed in the Z + location.)" 
+				+ "</html>"); 
 		//OMG, do I really have to use HTML line breaks? No automatic wrap? Wow. Java swing fail...
 		
 		panel.add(description, "wrap");//moving to next row here...
