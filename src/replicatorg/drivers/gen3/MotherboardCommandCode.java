@@ -30,7 +30,7 @@ public enum MotherboardCommandCode {
 	// Get the build name
 	GET_BUILD_NAME(20),
 	
-	WRITE_EEPROM32(20),
+	WRITE_EEPROM32(21),
 	
 	// QUEUE_POINT_INC(128) obsolete
 	QUEUE_POINT_ABS(129),
