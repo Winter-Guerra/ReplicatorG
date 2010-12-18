@@ -236,7 +236,6 @@ public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
 		legacyHomeMenu.add(makeHomeItem("Home XY-",EnumSet.of(Axis.X,Axis.Y),false));
 		legacyHomeMenu.add(makeHomeItem("Home all+",EnumSet.allOf(Axis.class),true));
 		legacyHomeMenu.add(makeHomeItem("Home all-",EnumSet.allOf(Axis.class),false));
-
 		return bar;
 	}
 
