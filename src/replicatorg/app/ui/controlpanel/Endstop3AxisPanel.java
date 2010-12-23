@@ -87,10 +87,11 @@ public class Endstop3AxisPanel extends JPanel implements ActionListener
 		this.driver = machine.getDriver();
 		setLayout(new MigLayout());
 		
-		xMinusButton.setSelected(true);
-		xPlusButton.setSelected(false);
-		yMinusButton.setSelected(true);
-		yPlusButton.setSelected(false);
+		//set our defaults...
+		xMinusButton.setSelected(false);
+		xPlusButton.setSelected(true);
+		yMinusButton.setSelected(false);
+		yPlusButton.setSelected(true);
 		zMinusButton.setSelected(false);
 		zPlusButton.setSelected(true);
 		

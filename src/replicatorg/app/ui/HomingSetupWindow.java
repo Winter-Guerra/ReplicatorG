@@ -198,6 +198,16 @@ if (ZaggoZprobe.isSelected()) { //if using Zaggo's hardware. Return Z axis value
 			        	}
 			        }
 			    } );
+			if (machine.getName().contains("Thingomatic")) { //if the machine is a thingomatic then this does not matter
+			//disable the Z-Probe checkbox
+				ZaggoZprobe.setText("N/A for Thingomatics");
+				ZaggoZprobe.setEnabled(false);
+			} else {
+				ZaggoZprobe.setText("Installed!");
+				ZaggoZprobe.setEnabled(true);
+			
+			}
+			
 			    panel.add(ZaggoZprobe, "gapleft 30, wrap");
 			    
 		//ask for zAxislift value (default 10);
