@@ -94,7 +94,7 @@ public class Base {
 	/**
 	 * The version number of this edition of replicatorG.
 	 */
-	public static final int VERSION = 22;
+	public static final int VERSION = 23;
 	/**
 	 * The textual representation of this version (4 digits, zero padded).
 	 */
@@ -771,6 +771,7 @@ public class Base {
 			image = img2;
 		} catch (InterruptedException e) {
 		} catch (IOException ioe) {
+		} catch (IllegalArgumentException iae) {
 		}
 		return image;
 	}

@@ -60,7 +60,7 @@ import net.miginfocom.swing.MigLayout;
 import replicatorg.app.Base;
 import replicatorg.app.MachineController;
 import replicatorg.app.ui.controlpanel.ExtruderPanel;
-import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
+import replicatorg.app.ui.controlpanel.JogPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.RetryException;
 import replicatorg.machine.MachineListener;
@@ -68,7 +68,7 @@ import replicatorg.machine.MachineProgressEvent;
 import replicatorg.machine.MachineState;
 import replicatorg.machine.MachineStateChangeEvent;
 import replicatorg.machine.MachineToolStatusEvent;
-import replicatorg.machine.model.Axis;
+import replicatorg.machine.model.AxisId;
 import replicatorg.machine.model.Endstops;
 import replicatorg.machine.model.ToolModel;
 
@@ -80,7 +80,7 @@ public class ControlPanelWindow extends JFrame implements
 
 	protected JPanel mainPanel;
 
-	protected Jog3AxisPanel jogPanel;
+	protected JogPanel jogPanel;
 
 	protected JTabbedPane toolsPane;
 
@@ -143,14 +143,14 @@ public class ControlPanelWindow extends JFrame implements
 		pollThread.start();
 	}
 
-	private JMenuItem makeHomeItem(String name,final EnumSet<Axis> set,final boolean positive) {
+	private JMenuItem makeHomeItem(String name,final EnumSet<AxisId> set,final boolean positive) {
 		JMenuItem item = new JMenuItem(name);
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					driver.homeAxes(set,positive,0);
 				} catch (RetryException e1) {
-					Base.logger.severe("Can't home axis; machine busy");
+					Base.logger.severe("Can't home AxisId; machine busy");
 				}
 			}
 		});
@@ -172,7 +172,7 @@ public class ControlPanelWindow extends JFrame implements
 		return firstautoitem;
 	}
 
-private JMenuItem makeAutoHomeItem(String name,final EnumSet<Axis> set) { //subroutine to add two new autohome routines to the Homing menu.
+private JMenuItem makeAutoHomeItem(String name,final EnumSet<AxisId> set) { //subroutine to add two new autohome routines to the Homing menu.
 		JMenuItem autoitem = new JMenuItem(name);
 		autoitem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent g) {
@@ -211,7 +211,7 @@ public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
 		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",(byte)2,(byte)2,(byte)2)); //auto home downwards and save the distance
 		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
 		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home +-+",(byte)2,(byte)1,(byte)2)); //auto home downwards and save the distance
-		autoHomingMenu.add(makeAutoHomeItem("Run Automatic Homing",EnumSet.allOf(Axis.class))); //auto home downwards from the saved distance
+		autoHomingMenu.add(makeAutoHomeItem("Run Automatic Homing",EnumSet.allOf(AxisId.class))); //auto home downwards from the saved distance
 		//autoHomingMenu.add(makeFirstTimeAutohomeWindowItem("First Time Home Window"));
 		
 		
@@ -219,23 +219,23 @@ public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
 		JMenu legacyHomeMenu = new JMenu("Legacy Homing"); 
 		bar.add(legacyHomeMenu);
 		//adding the appropriate homing options for your endstop configuration
-		for (Axis axis : Axis.values())
+		for (AxisId AxisId : replicatorg.machine.model.AxisId.values())
 		{
-			Endstops endstops = driver.getMachine().getEndstops(axis);
+			Endstops endstops = driver.getMachine().getEndstops(AxisId);
 			if (endstops != null)
 			{
 				if (endstops.hasMin == true)
-					legacyHomeMenu.add(makeHomeItem("Home "+axis.name()+"-",EnumSet.of(axis),false));
+					legacyHomeMenu.add(makeHomeItem("Home "+AxisId.name()+" to minimum",EnumSet.of(AxisId),false));
 				if (endstops.hasMax == true)
-					legacyHomeMenu.add(makeHomeItem("Home "+axis.name()+"+",EnumSet.of(axis),true));
+					legacyHomeMenu.add(makeHomeItem("Home "+AxisId.name()+" to maximum",EnumSet.of(AxisId),true));
 			}
 		}
 		
 		legacyHomeMenu.add(new JSeparator());
-		legacyHomeMenu.add(makeHomeItem("Home XY+",EnumSet.of(Axis.X,Axis.Y),true));
-		legacyHomeMenu.add(makeHomeItem("Home XY-",EnumSet.of(Axis.X,Axis.Y),false));
-		legacyHomeMenu.add(makeHomeItem("Home all+",EnumSet.allOf(Axis.class),true));
-		legacyHomeMenu.add(makeHomeItem("Home all-",EnumSet.allOf(Axis.class),false));
+		legacyHomeMenu.add(makeHomeItem("Home XY+",EnumSet.of(AxisId.X,AxisId.Y),true));
+		legacyHomeMenu.add(makeHomeItem("Home XY-",EnumSet.of(AxisId.X,AxisId.Y),false));
+		legacyHomeMenu.add(makeHomeItem("Home all+",EnumSet.allOf(AxisId.class),true));
+		legacyHomeMenu.add(makeHomeItem("Home all-",EnumSet.allOf(AxisId.class),false));
 		return bar;
 	}
 
@@ -251,7 +251,7 @@ public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
 	}
 
 	protected JComponent createJogPanel() {
-		jogPanel = new Jog3AxisPanel(machine);
+		jogPanel = new JogPanel(machine);
 		return jogPanel;
 	}
 

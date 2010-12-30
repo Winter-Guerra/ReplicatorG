@@ -29,12 +29,10 @@ import net.miginfocom.swing.MigLayout;
 import replicatorg.app.MachineController;
 import replicatorg.app.ui.controlpanel.Endstop3AxisPanel;
 import replicatorg.app.ui.controlpanel.ExtruderPanel;
-import replicatorg.app.ui.controlpanel.Jog3AxisPanel;
 import replicatorg.drivers.Driver;
 import replicatorg.drivers.OnboardParameters;
 import replicatorg.machine.model.ToolModel;
 import replicatorg.drivers.PenPlotter;
-import replicatorg.machine.model.Axis;
 import replicatorg.drivers.RetryException;
 import replicatorg.app.Base;
 
