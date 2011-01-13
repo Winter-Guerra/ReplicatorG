@@ -28,13 +28,14 @@ limit	False
 mill	False
 multiply	False
 oozebane	False
+outline	False
 outset	False
 preface	False
-raft	False
+raft	True
 speed	False
 splodge	False
 stretch	False
-temperature	True
+temperature	False
 tower	False
 unpause	False
 whittle	False
