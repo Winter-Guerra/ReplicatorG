@@ -31,8 +31,8 @@ oozebane	False
 outline	False
 outset	False
 preface	False
-raft	True
-speed	False
+raft	False
+speed	True
 splodge	False
 stretch	False
 temperature	False
