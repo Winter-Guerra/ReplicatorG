@@ -566,6 +566,137 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add16(20); // default to 20 seconds
 		runCommand(pb.getPacket());
 	}
+	
+	//Beta testing!
+	
+	public void firstHoming(byte direction[], double XYfeedrate, double Zfeedrate) throws RetryException { //Auto homing first calibration script. 
+		if (Base.logger.isLoggable(Level.FINER)) { //log the action
+			Base.logger.log(Level.FINER,"Running first homing script.");
+		}
+		
+		/*
+		---order of packets to send---
+		command_buffer.pop(); // remove the command
+		pop8 direction packets (one for each axis)
+		uint32_t feedrate = pop32(); // feedrate in us per step (one for XY and Z)
+		uint16_t timeout_s = pop16(); //The time to home for before giving up.
+		*/
+		
+		Point5d p = new Point5d(); //0,0,0. We already know that we should be here at the end of this.
+		
+		System.err.println("   SCP: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
+		if (super.getCurrentPosition().equals(p)) {}
+		else {super.setCurrentPosition(p); }
+
+		super.setCurrentPosition(p);
+
+		Point5d maxFeedrates = machine.getMaximumFeedrates();
+
+		if (XYfeedrate <= 0) { //if feedrate for the XY is not entered, use the fastest
+			// figure out our fastest feedrate.
+			XYfeedrate = Math.max(maxFeedrates.x(), maxFeedrates.y());
+		} 
+		if (Zfeedrate <= 0){ //if the feedrate for the Z stage is not entered, use the fastest
+			Zfeedrate = maxFeedrates.z();
+		}
+		
+		Point5d XYtarget = new Point5d();
+		Point5d Ztarget = new Point5d();
+		
+		if (direction[0] != 0) {
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.x());
+			XYtarget.setX(1); // just to give us feedrate info.
+		}
+		if (direction[1] != 0) {
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.y());
+			XYtarget.setY(1); // just to give us feedrate info.
+		}
+		if (direction[2] != 0) {
+			Zfeedrate = Math.min(Zfeedrate, maxFeedrates.z());
+			Ztarget.setZ(1); // just to give us feedrate info.
+		}
+		
+		// calculate ticks
+		long XYmicros = convertFeedrateToMicros(new Point5d(), XYtarget, XYfeedrate);
+		long Zmicros = convertFeedrateToMicros(new Point5d(), Ztarget, Zfeedrate);
+		// send it!
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.FIRST_AUTO_HOME.getCode());
+		
+		for (int i = 0; i < 3; i++) {
+		pb.add8(direction[i]); //send the directions!
+		}
+		
+		pb.add32((int) XYmicros); //feedrate for XY (they move together and have the same feedrate)
+		pb.add32((int) Zmicros);//Feedrate for Z stage
+		pb.add16(150); // default homing timeout is 150 seconds. (usually only takes about 90 seconds).
+		runCommand(pb.getPacket()); //send the command.		
+		
+	}
+		
+
+
+public void autoHoming(EnumSet<AxisId> axes, double XYfeedrate, double Zfeedrate) throws RetryException { //Auto homing script. //Made by Intern Winter
+
+	if (Base.logger.isLoggable(Level.FINER)) { //log the action
+			Base.logger.log(Level.FINER,"Running homing script.");
+		}
+		
+		/*
+		---order of packets to send---
+		command_buffer.pop(); // remove the command
+		uint32_t feedrate = pop32(); // feedrate in us per step (one for XY and one for Z)
+		uint16_t timeout_s = pop16(); //The time to home for before giving up.
+		*/
+
+		//We know where we should be. 0,0,0! (We only have to tell ourselves that we will be at 000. The machine will automatically know.)
+		Point5d p = new Point5d(); //0,0,0
+		
+		System.err.println("   SCP: "+p.toString()+ " (current "+getCurrentPosition().toString()+")");
+		if (super.getCurrentPosition().equals(p)) {}
+		else {super.setCurrentPosition(p); }
+
+		super.setCurrentPosition(p);
+
+		Point5d maxFeedrates = machine.getMaximumFeedrates();
+
+		if (XYfeedrate <= 0) { //if feedrate for the XY is not entered, use the fastest
+			// figure out our fastest feedrate.
+			XYfeedrate = Math.max(maxFeedrates.x(), maxFeedrates.y());
+		} 
+		if (Zfeedrate <= 0){ //if the feedrate for the Z stage is not entered, use the fastest
+			Zfeedrate = maxFeedrates.z();
+		}
+		
+		Point5d XYtarget = new Point5d();
+		Point5d Ztarget = new Point5d();
+		
+		if (axes.contains(AxisId.X)) {
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.x());
+			XYtarget.setX(1); // just to give us feedrate info.
+		}
+		if (axes.contains(AxisId.Y)) {
+			XYfeedrate = Math.min(XYfeedrate, maxFeedrates.y());
+			XYtarget.setY(1); // just to give us feedrate info.
+		}
+		if (axes.contains(AxisId.Z)) {
+			Zfeedrate = Math.min(Zfeedrate, maxFeedrates.z());
+			Ztarget.setZ(1); // just to give us feedrate info.
+		}
+		
+		// calculate ticks
+		long XYmicros = convertFeedrateToMicros(new Point5d(), XYtarget, XYfeedrate);
+		long Zmicros = convertFeedrateToMicros(new Point5d(), Ztarget, Zfeedrate);
+
+		// send it!
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.AUTO_HOME.getCode());
+		pb.add32((int) XYmicros); //feedrate for XY stage
+		pb.add32((int) Zmicros); //feedrate for the Z stage
+		pb.add16(150); // default is 150 seconds. (usually only takes about 90)
+		runCommand(pb.getPacket());
+		
+		
+	}
+
 		
 
 	public void delay(long millis) throws RetryException {
@@ -1351,6 +1482,24 @@ public class Sanguino3GDriver extends SerialDriver
 		PacketResponse pr = runQuery(pb.getPacket());
 		assert pr.get8() == data.length; 
 	}
+	
+	private void writeToEEPROM32(int offset, long data) {
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WRITE_EEPROM32.getCode());
+		pb.add16(offset);
+		pb.add32(data);
+		PacketResponse pr = runQuery(pb.getPacket());
+		//assert pr.get32() == data.length; 
+	}
+	
+	private void writeToEEPROM8(int offset, double data) {
+		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.WRITE_EEPROM.getCode());
+		pb.add16(offset);
+		pb.add8(1);
+		pb.add8((byte) data);
+		PacketResponse pr = runQuery(pb.getPacket());
+		//assert pr.get32() == data.length; 
+	}
+
 
 	private byte[] readFromToolEEPROM(int offset, int len) {
 		PacketBuilder pb = new PacketBuilder(MotherboardCommandCode.TOOL_QUERY.getCode());
@@ -1420,10 +1569,26 @@ public class Sanguino3GDriver extends SerialDriver
 	/// 00-01 - EEPROM data version
 	/// 02    - Axis inversion byte
 	/// 32-47 - Machine name (max. 16 chars)
+	///
+	/// 0x100, 0x101, 0x102. 256, 257, 258. Autohome direction settings (0 for axis disabled, 1 for -, 2 for +) 1 per each axis.
+	/// 0x103-06, 0x107-0x10a, 0x10b-0x10e. 259-262, 263-266, 267-270. Steps to move per axis. (Autohome axis varibles)
+	/// 0x10f-0x112. 271-274. Amount to move Zstage up during a home or safemove.
+	/// 0x113 275 Autohome extruder servo tool index
+	/// 0x114 276 Autohome extruder Z_Probe lift angle
+	/// 0x115 277 Autohome Extruder Z-Probe lowered angle
+
 	final private static int EEPROM_CHECK_OFFSET = 0;
 	final private static int EEPROM_MACHINE_NAME_OFFSET = 32;
 	final private static int EEPROM_AXIS_INVERSION_OFFSET = 2;
 	final private static int EEPROM_ENDSTOP_INVERSION_OFFSET = 3;
+	
+	final private static int EEPROM_AUTOHOME_DIRECTIONS_OFFSET = 256;
+	final private static int EEPROM_AUTOHOME_STEPS_PER_AXIS_OFFSET = 259;
+	final private static int EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET = 271;
+	final private static int EEPROM_Z_PROBE_EXTRUDER_TOOL_INDEX_OFFSET = 275;
+	final private static int EEPROM_Z_PROBE_EXTRUDER_LIFT_ANGLE_OFFSET = 276;
+	final private static int EEPROM_Z_PROBE_EXTRUDER_LOWERED_ANGLE_OFFSET = 277;
+
 	final static class ECThermistorOffsets {
 		final private static int[] TABLE_OFFSETS = {
 			0x00f0,
@@ -1494,6 +1659,40 @@ public class Sanguino3GDriver extends SerialDriver
 		}
 		if (idx < 16) b[idx] = 0;
 		writeToEEPROM(EEPROM_MACHINE_NAME_OFFSET,b);
+	}
+	
+	public void setZstageMMtoLift(String MMtoLift) {
+		MMtoLift = new String(MMtoLift);
+		int aInt = Integer.valueOf(MMtoLift);
+		if (aInt < 0) { //No negatives please. This is a value for lift, not dig.
+		aInt = -aInt;
+		}
+		Point5d mmtolift = new Point5d();
+		mmtolift.setZ(aInt);
+		Point5d steps = machine.mmToSteps(mmtolift);
+		//pb.add32((long) steps.x);
+		//pb.add32((long) steps.y);
+		//pb.add32((long) steps.z);
+		writeToEEPROM32(EEPROM_MM_TO_LIFT_ZSTAGE_AFTER_HOMING_OFFSET,(long) steps.z());
+	}
+	
+	public void setZProbeSettings(String servoLiftPos, String servoLoweredPos, byte toolIndex) {
+		servoLiftPos = new String(servoLiftPos);
+		double liftPos;
+		liftPos = Double.valueOf(servoLiftPos);
+		writeToEEPROM8(EEPROM_Z_PROBE_EXTRUDER_LIFT_ANGLE_OFFSET, liftPos);
+		
+		servoLiftPos = new String(servoLoweredPos);
+		double loweredPos;
+		loweredPos = Double.valueOf(servoLoweredPos);
+		writeToEEPROM8(EEPROM_Z_PROBE_EXTRUDER_LOWERED_ANGLE_OFFSET, loweredPos);
+	
+		
+		//toolIndex = new String(toolIndex);
+		byte toolIndexByte[] = new byte[1];
+		toolIndexByte[0] = toolIndex;
+		writeToEEPROM(EEPROM_Z_PROBE_EXTRUDER_TOOL_INDEX_OFFSET, toolIndexByte);
+	
 	}
 	
 	public boolean hasFeatureOnboardParameters() {

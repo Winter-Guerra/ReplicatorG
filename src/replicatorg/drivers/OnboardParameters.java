@@ -10,6 +10,9 @@ public interface OnboardParameters {
 	
 	String getMachineName();
 	void setMachineName(String machineName);
+	void setZstageMMtoLift(String MMtoLift);
+	void setZProbeSettings(String servoLiftPos, String servoLoweredPos, byte toolIndex);
+	
 	
 	public enum EndstopType {
 		NOT_PRESENT((byte)0x00),

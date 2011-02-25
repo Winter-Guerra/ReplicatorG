@@ -379,6 +379,22 @@ public class DriverBaseImplementation implements Driver {
 	 **************************************************************************/
 	public void homeAxes(EnumSet<AxisId> axes, boolean positive, double feedrate) throws RetryException {
 	}
+	
+
+	/***************************************************************************
+	 * Automatic homing calibration script. 
+	 **************************************************************************/
+
+	public void firstHoming(byte direction[], double XYfeedrate, double Zfeedrate) throws RetryException {
+	}
+	
+	/***************************************************************************
+	 * Auto homing script.
+	 **************************************************************************/
+
+
+	public void autoHoming(EnumSet<AxisId> axes, double XYfeedrate, double Zfeedrate) throws RetryException {
+	}
 
 	/***************************************************************************
 	 * Machine interface functions
