@@ -158,10 +158,69 @@ public class ControlPanelWindow extends JFrame implements
 		});
 		return item;
 	}
+	
+	private JMenuItem makeFirstTimeAutoHomeItem(String name,final byte x, final byte y, final byte z) { //subroutine to add two new autohome routines to the Homing menu.
+		JMenuItem firstautoitem = new JMenuItem(name);
+		firstautoitem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent f) {
+			byte direction[] = {x, y, z};
+
+			try {
+				driver.firstHoming(direction,0,0);
+				} catch (RetryException e1) {
+				Base.logger.severe("Can't setup homing; machine busy");
+				}
+			}
+		});
+		return firstautoitem;
+	}
+
+private JMenuItem makeAutoHomeItem(String name,final EnumSet<AxisId> set) { //subroutine to add two new autohome routines to the Homing menu.
+		JMenuItem autoitem = new JMenuItem(name);
+		autoitem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent g) {
+
+			try {
+				driver.autoHoming(set,0,0);
+				} catch (RetryException e1) {
+				Base.logger.severe("Can't home; machine busy");
+				}
+		}});
+		return autoitem;
+	}
+
+public JMenuItem makeFirstTimeAutohomeWindowItem(String name) {
+		JMenuItem firstTimeHomeWindow = new JMenuItem(name);
+		firstTimeHomeWindow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent h) {
+				HomingSetupWindow home = HomingSetupWindow.getHomingWindow(machine);
+				if (home != null) {
+					home.pack();
+					home.setVisible(true);
+					home.toFront();
+				}
+		}
+	});
+		return firstTimeHomeWindow;
+	}
+	
+	
 
 	protected JMenuBar createMenuBar() {
 		JMenuBar bar = new JMenuBar();
-		JMenu homeMenu = new JMenu("Homing");
+		//Menu to control/use/setup the Autohoming functions built into the Makerbot 
+		JMenu autoHomingMenu = new JMenu("Automatic Homing");
+		bar.add(autoHomingMenu);
+		
+		autoHomingMenu.add(makeFirstTimeAutohomeWindowItem("Setup Automatic Homing")); //open up the setup window
+		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All+",(byte)2,(byte)2,(byte)2)); //auto home downwards and save the distance
+		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home All-",(byte)1,(byte)1,(byte)1)); //auto home downwards and save the distance
+		//autoHomingMenu.add(makeFirstTimeAutoHomeItem("First Auto Home +-+",(byte)2,(byte)1,(byte)2)); //auto home downwards and save the distance
+		autoHomingMenu.add(makeAutoHomeItem("Run Automatic Homing",EnumSet.allOf(AxisId.class))); //auto home downwards from the saved distance
+		//autoHomingMenu.add(makeFirstTimeAutohomeWindowItem("First Time Home Window"));
+
+		
+		JMenu homeMenu = new JMenu("Legacy Homing");
 		bar.add(homeMenu);
 		
 		//adding the appropriate homing options for your endstop configuration

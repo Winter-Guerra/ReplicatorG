@@ -32,6 +32,8 @@ public enum MotherboardCommandCode {
 	GET_POSITION_EXT(21),
 	EXTENDED_STOP(22),
 	
+	WRITE_EEPROM32(23), //Not needed, just easier to use than fooling around with Endian-ness.
+	
 	// QUEUE_POINT_INC(128) obsolete
 	QUEUE_POINT_ABS(129),
 	SET_POSITION(130),
@@ -45,7 +47,9 @@ public enum MotherboardCommandCode {
 	QUEUE_POINT_EXT(139),
 	SET_POSITION_EXT(140),
 	WAIT_FOR_PLATFORM(141),
-	QUEUE_POINT_NEW(142);
+	QUEUE_POINT_NEW(142),
+	FIRST_AUTO_HOME(143),
+	AUTO_HOME(144);
 	
 	private int code;
 	private MotherboardCommandCode(int code) {

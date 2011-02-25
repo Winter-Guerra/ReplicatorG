@@ -73,6 +73,8 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 	final private static Color measuredPlatformColor = Color.WHITE;
 	
 	long startMillis = System.currentTimeMillis();
+	
+	public static volatile Boolean graphPaused = false;
 
 	private TimeTableXYDataset measuredDataset = new TimeTableXYDataset();
 	private TimeTableXYDataset targetDataset = new TimeTableXYDataset();
@@ -475,6 +477,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 
 	public void updateStatus() {
 		
+		if (!graphPaused) { //continue if not paused
 		Second second = new Second(new Date(System.currentTimeMillis() - startMillis));
 		int toolStatus = machine.getDriver().getToolStatus();
 		
@@ -485,6 +488,7 @@ public class ExtruderPanel extends JPanel implements FocusListener, ActionListen
 		if (machine.getModel().currentTool() == toolModel && toolModel.hasHeatedPlatform()) {
 			double temperature = machine.getDriver().getPlatformTemperature();
 			updatePlatformTemperature(second, temperature);
+		}
 		}
 	}
 	

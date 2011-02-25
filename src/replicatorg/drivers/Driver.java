@@ -199,6 +199,18 @@ public interface Driver {
 	public void homeAxes(EnumSet<AxisId> axes, boolean positive, double feedrate) throws RetryException;
 
 	/**
+	*First homing script. (Script that calibrates the makerbot homing sequence.)
+	*/
+
+	public void firstHoming(byte direction[], double XYfeedrate, double Zfeedrate) throws RetryException;
+	
+	//regular everyday use of the auto home script
+
+	public void autoHoming(EnumSet<AxisId> axes, double XYfeedrate, double Zfeedrate) throws RetryException;
+	
+
+	
+	/**
 	 * delay / pause function
 	 * @throws RetryException 
 	 */
