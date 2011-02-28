@@ -105,7 +105,7 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 			//Send servo test command.
 				try {
-					((PenPlotter)driver).setServoPos(1 ,Double.parseDouble(servoLiftPosition.getText()));
+					((PenPlotter)driver).setServoPos(0 ,Double.parseDouble(servoLiftPosition.getText()));
 					} catch (RetryException e1) {
 					Base.logger.severe("Can't send command; machine busy");
 					}
@@ -123,7 +123,7 @@ public class HomingSetupWindowZProbePrompt extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 			//Send servo test command.	
 				try {
-					((PenPlotter)driver).setServoPos(1 ,Double.parseDouble(servoLowerPosition.getText()));
+					((PenPlotter)driver).setServoPos(0 ,Double.parseDouble(servoLowerPosition.getText()));
 					} catch (RetryException e1) {
 					Base.logger.severe("Can't send command; machine busy");
 					}
