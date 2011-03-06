@@ -82,7 +82,8 @@ public class FirmwareUploader {
 		t.start();
 	}
 
-	static public final String DEFAULT_UPDATES_URL = "http://firmware.makerbot.com/firmware.xml";
+	//Changed to XtremD's webhosted firmware.
+	static public final String DEFAULT_UPDATES_URL = "http://xtremd-mb-firmware-march-2011.uphero.com/firmware.xml";
 
 	/**
 	 * Get the URL of the source for dowloading
