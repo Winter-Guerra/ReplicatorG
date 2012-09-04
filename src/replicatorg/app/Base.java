@@ -7,7 +7,7 @@
  Copyright (c) 2008 Zach Smith
 
  Forked from Arduino: http://www.arduino.cc
- 
+
  Based on Processing http://www.processing.org
  Copyright (c) 2004-05 Ben Fry and Casey Reas
  Copyright (c) 2001-04 Massachusetts Institute of Technology
@@ -98,12 +98,12 @@ public class Base {
 		OPEN_NEW,
 		OPEN_SPECIFIC_FILE
 	};
-	
+
 	/**
 	 * The version number of this edition of replicatorG.
 	 */
 	public static final int VERSION = 38;
-	
+
 	/**
 	 * The textual representation of this version (4 digits, zero padded).
 	 */
@@ -113,7 +113,7 @@ public class Base {
 	 * The machine controller in use.
 	 */
 	private static MachineLoader machineLoader;
-	
+
 	/**
 	 * The user preferences store.
 	 */
@@ -123,15 +123,15 @@ public class Base {
 	*  Simple base data capture logger. So simple, but useful.
 	*/
 	static public DataCapture capture;
-	
+
 	/**
 	 * The general-purpose logging object.
 	 */
 	public static Logger logger = Logger.getLogger("replicatorg.log");
 	public static FileHandler logFileHandler = null;
 	public static String logFilePath = null;
-	
-	
+
+
     /*
      * expands ~ as per python os.path.expanduser
      */
@@ -141,7 +141,7 @@ public class Base {
         return path.replaceFirst("~", user);
     }
 
-	
+
 	/**
 	 * Start logging on the given path. If the path is null, stop file logging.
 	 * @param path The path to log messages to
@@ -149,20 +149,20 @@ public class Base {
 	public static void setLogFile(String path) {
 		boolean useLogFile = Base.preferences.getBoolean("replicatorg.useLogFile",false);
 		String explicitPath = expanduser(path);
-		
+
 		if (useLogFile && explicitPath.equals(logFilePath)) { return; }
-		
+
 		if (logFileHandler != null) {
 			logger.removeHandler(logFileHandler);
 			logFileHandler = null;
 		}
-		
+
 		logFilePath = explicitPath;
-		
+
 		if (useLogFile && logFilePath != null && logFilePath.length() > 0) {
 			boolean append = true;
 			try {
-				
+
 				FileHandler fh = new FileHandler(logFilePath, append);
 				fh.setFormatter(new SimpleFormatter());
 				fh.setLevel(Level.ALL);
@@ -175,8 +175,8 @@ public class Base {
 			}
 		}
 	}
-	
-	{	
+
+	{
 		String levelName = Base.preferences.get("replicatorg.debuglevel", Level.INFO.getName());
 		Level l = Level.parse(levelName);
 		logger.setLevel(l);
@@ -220,7 +220,7 @@ public class Base {
 		}
 		return prefs;
 	}
-	
+
 	static private void moveAll(File source, File target) {
 		try {
 			if (source.isDirectory()) {
@@ -239,7 +239,7 @@ public class Base {
 			Base.logger.severe(e.getMessage());
 		}
 	}
-		
+
 	/**
 	 * Reset the preferences for ReplicatorG to a clean state.
 	 */
@@ -261,12 +261,12 @@ public class Base {
 			Base.logger.severe(e.getMessage());
 		}
 	}
-	
+
 	/**
 	 * Back up the preferences
 	 * @return
 	 */
-	
+
 	static public String getToolsPath() {
 	    String toolsDir = System.getProperty("replicatorg.toolpath");
 	    if (toolsDir == null || (toolsDir.length() == 0)) {
@@ -275,7 +275,7 @@ public class Base {
 	    }
 	    return toolsDir;
 	}
-	
+
 	/**
 	 * Get the the user preferences and profiles directory. By default this is
 	 * ~/.replicatorg; if an alternate preferences set is selected, it will
@@ -289,21 +289,21 @@ public class Base {
 			dir.mkdirs();
 			if( ! dir.exists() )  { // we failed to create our user dir. Log the failure, try to continue
 				Base.logger.severe("We could not create a user directory at: "+ path );
-				return null; 
+				return null;
 			}
 		}
 
 		return dir;
 	}
-	
-	/** 
+
+	/**
 	 * Retrieves the application data directory via OS specific voodoo.
-	 * Defaults to the current directory if no os specific settings exist, 
+	 * Defaults to the current directory if no os specific settings exist,
 	 * @return File object pointing to the OS specific ApplicationsDirectory
 	 */
 	static public File getApplicationDirectory() {
-		if( isMacOS() ) { 
-			try { 
+		if( isMacOS() ) {
+			try {
 				File x = new File(".");
 				String baseDir = x.getCanonicalPath();
 				//baseDir = baseDir + "/ReplicatorG.app/Contents/Resources";
@@ -312,7 +312,14 @@ public class Base {
 				if(new File(baseDir + "/ReplicatorG.app/Contents/Resources").exists())
 					return new File(baseDir + "/ReplicatorG.app/Contents/Resources");
 				else
-					Base.logger.severe(baseDir + "/ReplicatorG.app not found, using " + baseDir + "/replicatorg/");
+					Base.logger.severe("Resource folder " + baseDir + "/ReplicatorG.app not found. Using fallback " + baseDir + "/replicatorg");
+					if (new File(baseDir + "/replicatorg").exists()) {
+					Base.logger.info("Resources loaded");
+					} else {
+					Base.logger.severe("Fallback resource folder" + baseDir + "/replicatorg not found either.");
+					Base.logger.severe("Resources could not loaded.");
+					}
+					//Return fallback regardless of whether it exists.
 					return new File(baseDir + "/replicatorg");
 				}
 			catch (java.io.IOException e) {
@@ -321,7 +328,7 @@ public class Base {
 		}
 		return new File(System.getProperty("user.dir"));
 	}
-	
+
 	static public File getApplicationFile(String path) {
 		return new File(getApplicationDirectory(), path);
 	}
@@ -333,16 +340,16 @@ public class Base {
 	static public File getUserDir(String path) {
 		return getUserDir(path,true);
 	}
-	
+
 	/**
-	 * Singleton NumberFormat used for parsing and displaying numbers to GUI in the 
+	 * Singleton NumberFormat used for parsing and displaying numbers to GUI in the
 	 * localized format. Use for all non-GCode, numbers output and input.
 	 */
 	static private NumberFormat localNF = NumberFormat.getInstance();
 	static public NumberFormat getLocalFormat() {
 		return localNF;
 	}
-	
+
 	/** Singleton Gcode NumberFormat: Unsed for writing the correct precision strings
 	 * when generating gcode (minimum one decimal places) using . as decimal separator
 	 */
@@ -357,9 +364,9 @@ public class Base {
 	static public NumberFormat getGcodeFormat() {
 		return gcodeNF;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param path The relative path to the file in the .replicatorG directory
 	 * @param autoCopy If true, copy over the file of the same name in the application directory if none is found in the prefs directory.
 	 * @return
@@ -414,7 +421,7 @@ public class Base {
 		return f;
 	}
 
-	
+
 	static public Font getFontPref(String name, String defaultValue) {
 		String s = preferences.get(name,defaultValue);
 		StringTokenizer st = new StringTokenizer(s, ",");
@@ -425,7 +432,7 @@ public class Base {
 						| ((fontstyle.indexOf("italic") != -1) ? Font.ITALIC
 								: 0), Integer.parseInt(st.nextToken()));
 	}
-	
+
 	static public Color getColorPref(String name,String defaultValue) {
 		String s = preferences.get(name, defaultValue);
 		Color parsed = null;
@@ -444,7 +451,7 @@ public class Base {
 	 * The main UI window.
 	 */
 	static MainWindow editor = null;
-	
+
 	public static MainWindow getEditor() {
 		return editor;
 	}
@@ -454,7 +461,7 @@ public class Base {
 			"gcode", "ngc",
 			"stl", "dae", "obj"
 	};
-	
+
 	/**
 	 * Return the extension of a path, converted to lowercase.
 	 * @param path The path to check.
@@ -464,7 +471,7 @@ public class Base {
 		String[] split = path.split("\\.");
 		return split[split.length-1];
 	}
-	
+
 	public static boolean supportedExtension(String path) {
 		String suffix = getExtension(path);
 		for (final String s : supportedExtensions) {
@@ -472,7 +479,7 @@ public class Base {
 		}
 		return false;
 	}
-	
+
 
 	static public void main(String args[]) {
 
@@ -491,9 +498,9 @@ public class Base {
 		 System.setProperty("com.apple.mrj.application.apple.menu.about.name",
 				    "ReplicatorG");
 		}
-		
+
 		boolean cleanPrefs = false;
-		
+
 		// parse command line input
 		for (int i=0;i<args.length;i++) {
 			if (args[i].equals("--alternate-prefs")) {
@@ -536,16 +543,16 @@ public class Base {
 				Base.openedAtStartup = args[i];
 			}
 		}
-		
+
 
 		// Use the default system proxy settings
 		System.setProperty("java.net.useSystemProxies", "true");
     	// Use antialiasing implicitly
 		System.setProperty("j3d.implicitAntialiasing", "true");
-		
+
 		// Start the firmware check thread.
 		FirmwareUploader.checkFirmware();
-		
+
 		// MAC OS X ONLY:
 		// register a temporary/early version of the mrj open document handler,
 		// because the event may be lost (sometimes, not always) by the time
@@ -567,14 +574,14 @@ public class Base {
 	/** Check that the correct directories are writeable, and issue warnings. */
 	private void checkDirectories() {
 		// Warn about read-only user directories
-    	{    		
+    	{
     		File userDir = getUserDirectory();
     		String header = null;
     		if (!userDir.exists()) header = new String("Unable to create user directory");
     		else if (!userDir.canWrite()) header = new String("Unable to write to user directory");
     		else if (!userDir.isDirectory()) header = new String("User directory must be a directory");
     		if (header != null) {
-    			Base.showMessage(header, 
+    			Base.showMessage(header,
     					"<html><body>ReplicatorG can not write to the directory "+userDir.getAbsolutePath()+".<br>" +
     					"Some functions of ReplicatorG, like toolpath generation and firmware updates,<br>" +
     					"require ReplicatorG to write data to this directory.  You should end this<br>"+
@@ -595,14 +602,14 @@ public class Base {
     	}
 	}
 	/**
-	 * 
+	 *
 	 * @param cleanPrefs Before starting ReplicatorG proper, erase the user preferences.
 	 */
 	public Base(boolean cleanPrefs) {
 		if (cleanPrefs) {
 			resetPreferences();
 		}
-		
+
 		// set the look and feel before opening the window
 		try {
 			if (Base.isMacOS()) {
@@ -641,7 +648,7 @@ public class Base {
 
 		// use native popups so they don't look so crappy on osx
 		JPopupMenu.setDefaultLightWeightPopupEnabled(false);
-		
+
 		SwingUtilities.invokeLater(new Runnable() {
 //		    private TrayIcon trayIcon;
 
@@ -650,10 +657,10 @@ public class Base {
 				String machine = Base.preferences.get("machine.name", null);
 				if(machine == null)
 					Base.preferences.put("machine.name", "The Replicator Dual");
-				
+
 				// build the editor object
 				editor = new MainWindow();
-				
+
 				notificationHandler = NotificationHandler.Factory.getHandler(editor, Base.preferences.getBoolean("ui.preferSystemTrayNotifications", false));
 
 				// Get sizing preferences. This is an issue of contention; let's look at how
@@ -661,17 +668,17 @@ public class Base {
 				editor.restorePreferences();
 				// add shutdown hook to store preferences
 				Runtime.getRuntime().addShutdownHook(new Thread("Shutdown Hook") {
-					final private MainWindow w = editor; 
+					final private MainWindow w = editor;
 					public void run() {
 						w.onShutdown();
 					}
 				});
-				
+
 				boolean autoconnect = Base.preferences.getBoolean("replicatorg.autoconnect",true);
 				String machineName = preferences.get("machine.name", "");
-				
+
 				editor.loadMachine(machineName, autoconnect);
-				
+
 				// show the window
 				editor.setVisible(true);
 				checkDirectories();
@@ -693,7 +700,7 @@ public class Base {
 	public enum Arch {
 		x86_64, x86, ARM, PPC, OTHER
 	}
-	
+
 	/**
 	 * Full name of the Java version (i.e. 1.5.0_11). Prior to 0125, this was
 	 * only the first three digits.
@@ -718,8 +725,8 @@ public class Base {
 	 */
 	static public Platform platform;
 
-	static public Arch arch; 
-	
+	static public Arch arch;
+
 	/**
 	 * Current platform in use.
 	 * <P>
@@ -753,7 +760,7 @@ public class Base {
 				platform = Platform.OTHER;
 			}
 			String aString = System.getProperty("os.arch");
-			if("i386".equals(aString)) 
+			if("i386".equals(aString))
 				arch = Arch.x86;
 			else if("x86_64".equals(aString) || "amd64".equals(aString) )
 				arch =  Arch.x86_64;
@@ -761,9 +768,9 @@ public class Base {
 				arch = Arch.OTHER;
 				throw new RuntimeException("Can not use use arch: '" + arch + "'");
 			}
-			
 
-			
+
+
 		}
 	}
 
@@ -797,7 +804,7 @@ public class Base {
 	static public boolean isx86(){
 		return arch == Arch.x86;
 	}
-	
+
 	/**
 	 * Registers key events for a Ctrl-W and ESC with an ActionListener that
 	 * will take care of disposing the window.
@@ -983,9 +990,9 @@ public class Base {
 	 * bummer, but something to notify the user about.
 	 */
 	static public void showMessage(String title, String message) {
-		if (notificationHandler == null) { 
+		if (notificationHandler == null) {
 			notificationHandler = NotificationHandler.Factory.getHandler(null, false);
-		}		
+		}
 		notificationHandler.showMessage(title,message);
 	}
 
@@ -993,24 +1000,24 @@ public class Base {
 	 * Non-fatal error message with optional stack trace side dish.
 	 */
 	static public void showWarning(String title, String message, Exception e) {
-		if (notificationHandler == null) { 
+		if (notificationHandler == null) {
 			notificationHandler = NotificationHandler.Factory.getHandler(null, false);
 		}
 		notificationHandler.showWarning(title, message, e);
-		
+
 		if (e != null)
 			e.printStackTrace();
 	}
 
 	/**
 	 * Show an error message that's actually fatal to the program. This is an
-	 * error that can't be recovered. Use showWarning() for errors that allow 
+	 * error that can't be recovered. Use showWarning() for errors that allow
 	 * ReplicatorG to continue running.
 	 */
 	static public void quitWithError(String title, String message, Throwable e) {
 
 		notificationHandler.showError(title, message, e);
-		
+
 		if (e != null)
 			e.printStackTrace();
 		System.exit(1);
@@ -1209,7 +1216,7 @@ public class Base {
 			}
 		}
 	}
-	
+
 	/** Get a reference to the currently selected machine **/
 	static public MachineLoader getMachineLoader() {
 		if (machineLoader == null) {
@@ -1219,17 +1226,17 @@ public class Base {
 	}
 
 
-	
 
-	/// Checks global stautus and bot settings to find out if there 
-	/// is a bot specific setting for this key 
+
+	/// Checks global stautus and bot settings to find out if there
+	/// is a bot specific setting for this key
 	static public String findDefaultByGlobalStatus(String valueKey, String defaultValue)
 	{
 		MachineInterface mi = getMachineLoader().getMachineInterface();
 		DriverQueryInterface qi = mi.getDriverQueryInterface();
-	
+
 		// 1) if we are attached, get machine specific value(s)
-		if( mi.isConnected()) { 
+		if( mi.isConnected()) {
 			//Base.logger.severe("situationBestFet fetching from qi");
 			return qi.getConfigValue(valueKey, defaultValue);
 		}
