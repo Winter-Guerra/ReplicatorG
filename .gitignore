@@ -19,3 +19,6 @@ ReplicatorG.app
 *.diff
 .DS_Store
 *.tmp
+
+# Resources folder
+/replicatorg

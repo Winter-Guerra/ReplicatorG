@@ -90,8 +90,15 @@
 	</target>
 
 	<target name="run" depends="jar">
+
+		<!-- Consolidate resources needed for ReplicatorG's test build -->
+		<property name="target.dir" value="replicatorg" />
+		<antcall target="dist-common-plain" />
+
 		<java fork="true" classname="replicatorg.app.Base">
 			<!-- jvm="/usr/lib/jvm/java-1.5.0-sun/bin/java" -->
+
+
 
 			<jvmarg value="-ea" />
 			<jvmarg value="-Xmx512m" />
@@ -150,7 +157,7 @@
 
 	<!--
   <taskdef name="testng" classpath="test/lib/testng.jar" classname="org.testng.TestNGAntTask" />
-  
+
   <target name="test" depends="jar,compile-tests">
   	<testng classpathref="test.cp" suiteName="" testName="">
 		<sysproperty key="java.library.path" path="${native.lib.dir}"/>
@@ -218,7 +225,7 @@
 		<copy todir="${reso.dir}/docs">
 			<fileset dir="docs/" excludes="HOWTO-add-new-skeinforge.txt,overview.odg" />
 		</copy>
-	
+
 		<!-- permissions -->
 		<chmod file="${reso.dir}/skein_engines/mg_engines/mac/miracle_grue" perm="ugo+rx" />
 		<chmod file="${reso.dir}/skein_engines/slic3r_engines/mac/slic3r" perm="ugo+rx" />
